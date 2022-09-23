@@ -14,7 +14,6 @@ const moves = {
     "black-pawn": [{x: -1, z: 0}],
     "black-pawn-first": [{x: -1, z: 0}, {x: -2, z: 0}],
     "black-pawn-capture": [{x: -1, z: -1}, {x: -1, z: 1}],
-    
 }
 
 
@@ -168,6 +167,24 @@ createPiece(new THREE.Vector3(7, 0.3, 2), "black", "bishop")
 createPiece(new THREE.Vector3(7, 0.3, 5), "black", "bishop")
 
 /**
+ * Knights
+ */
+
+const defineKnightMoves = () => {
+    moves.knight = [
+        {x: -2 , z: -1},
+        {x: -2, z: 1},
+        {x: -1, z: -2},
+        {x: -1, z: 2},
+        {x: 1, z: -2},
+        {x: 1, z: 2},
+        {x: 2, z: -1},
+        {x: 2, z: 1}
+    ] 
+}
+defineKnightMoves()
+
+/**
  * Floor
  */
 const floor = new THREE.Mesh(
@@ -317,7 +334,6 @@ dragControls.addEventListener( 'dragstart', function ( event ) {event.object
 dragControls.addEventListener ( 'drag', function( event ){
     const position = getCoordinatesOfPiece(event.object)
     lightSquare(position)
-
     event.object.position.y = 0.5; // This will prevent moving z axis, but will be on 0 line. change this to your object position of z axis.
    })
 
@@ -346,7 +362,6 @@ dragControls.addEventListener( 'dragend', function ( event ) {
     // piece.material.emissive.set( 0x000000 );
     turnOffAllSquares()
 } );
-
 
 /**
  * Helper Functions
@@ -388,7 +403,7 @@ const checkLegalMove = (originPosition, piece) => {
         z: goalPosition.z - originPosition.z
     }
     const validMoves = getValidMoves(piece, originPosition)
-    if( !containsObject(move, validMoves)) { return false }
+    if( !containsObject(move, validMoves) ) { return false }
     
     // Check if Goal is on the Board
     if(goalPosition.x < 0 || goalPosition.x >= 8 || goalPosition.z < 0 || goalPosition.z >= 8){ return false }
@@ -405,7 +420,6 @@ const checkLegalMove = (originPosition, piece) => {
     {
         if (!checkDiagonallinesClear(originPosition, goalPosition)){ return false }
     }
-        
     return true
 }
 
