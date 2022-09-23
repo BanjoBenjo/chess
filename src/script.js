@@ -192,6 +192,15 @@ scene.add(floor)
 const axesHelpers = new THREE.AxesHelper()
 scene.add(axesHelpers)
 
+function containsObject(obj, list) {
+    // Find if the array contains an object by comparing the property value
+    if(list.some(move => move.x === obj.x && move.z === obj.z)){
+        return true;
+    } else{
+        return false;
+    }
+}
+
 /**
  * Lights
  */
@@ -371,64 +380,80 @@ const getValidMoves = (piece, position) => {
     }
     return validMoves
 }
+
 const checkLegalMove = (originPosition, piece) => {
-    const position = getCoordinatesOfPiece(piece)
+    const goalPosition = getCoordinatesOfPiece(piece)
+    const move = {
+        x: goalPosition.x - originPosition.x, 
+        z: goalPosition.z - originPosition.z
+    }
     const validMoves = getValidMoves(piece, originPosition)
-
-    for(let move of validMoves)
-    {
-        const x = originPosition.x + move.x
-        const z = originPosition.z + move.z
-        
-        // Check if Goal is on the Board
-        if(x < 0 || x >= 8 || z < 0 || z >= 8){ continue }
-        if(piece.name == 'pawn')
-        {
-            if (!checkHorizontallinesClear(originPosition, {x:x, z:z})){ continue }
-        }
-        if(piece.name == 'rook')
-        {
-            if (!checkHorizontallinesClear(originPosition, {x:x, z:z})){ continue }
-            if (!checkVerticlallinesClear(originPosition, {x:x, z:z})){ continue }
-        }
-        if(piece.name === 'bishop')
-        {
-            if (!checkDiagonallinesClear(originPosition, {x:x, z:z})){ continue }
-        }
-        
-        // Return true when set Position is a possible move
-        if(position.x == x && position.z == z){return true}
-    }
-    // else return false
-    return false
-}
-
-const checkVerticlallinesClear = (originPosition, goalPosition) => 
-{
-    // if z position does not change, the movement is not on a vertical line
-    if (originPosition.z === goalPosition.z) {return true}
-
-    // sort the 2 z-coordinates to make it more easy to iterate between them
-    const z_positions = [originPosition.z, goalPosition.z].sort(function (a, b) {  return a - b;  });
+    if( !containsObject(move, validMoves)) { return false }
     
-    // for all positions between origin and goal
-    for(let z=z_positions[0]+1; z < z_positions[1]; z++ )
+    // Check if Goal is on the Board
+    if(goalPosition.x < 0 || goalPosition.x >= 8 || goalPosition.z < 0 || goalPosition.z >= 8){ return false }
+    if(piece.name == 'pawn')
     {
-        // when one board sqaure is occupied by another piece return false
-        if(board[goalPosition.x][z].piece != null){ return false }
+        if (!checkHorizontallinesClear(originPosition, goalPosition)){ return false }
     }
+    if(piece.name == 'rook')
+    {
+        if (!checkHorizontallinesClear(originPosition, goalPosition)){ return false }
+        if (!checkVerticallinesClear(originPosition, goalPosition)){ return false }
+    }
+    if(piece.name === 'bishop')
+    {
+        if (!checkDiagonallinesClear(originPosition, goalPosition)){ return false }
+    }
+        
     return true
 }
 
 const checkHorizontallinesClear = (originPosition, goalPosition) => 
 {
+    if (originPosition.z === goalPosition.z) {return true}
+
+    // create z coordinates while containing order
+    const zDeclines = goalPosition.z < originPosition.z   
+    const z_positions = [originPosition.z, goalPosition.z].sort(function (a, b) {  return a - b;  });
+    
+    let z = []
+    for(let i=z_positions[0]; i <= z_positions[1]; i++ )
+    {
+        z.push(i)
+    }
+    if(zDeclines){ z = z.reverse() }
+
+    const numberSquaresMoved = z.length -1
+    
+    for(let t=1; t <= numberSquaresMoved; t++ )
+    {
+        if(board[goalPosition.x][z[t]].piece != null){ return false }
+    }    
+    return true
+}
+
+const checkVerticallinesClear = (originPosition, goalPosition) => 
+{
     if (originPosition.x === goalPosition.x) {return true}
+
+    // create x coordinates while containing order
+    const xDeclines = goalPosition.x < originPosition.x   
     const x_positions = [originPosition.x, goalPosition.x].sort(function (a, b) {  return a - b;  });
     
-    for(let x=x_positions[0]+1; x < x_positions[1]; x++ )
+    let x = []
+    for(let i=x_positions[0]; i <= x_positions[1]; i++ )
     {
-        if(board[x][goalPosition.z].piece != null){ return false }
+        x.push(i)
     }
+    if(xDeclines){ x = x.reverse() }
+
+    const numberSquaresMoved = x.length -1
+    
+    for(let t=1; t <= numberSquaresMoved; t++ )
+    {
+        if(board[x[t]][goalPosition.z].piece != null){ return false }
+    }    
     return true
 }
 
@@ -452,9 +477,9 @@ const checkDiagonallinesClear = (originPosition, goalPosition) =>
     for (var i=zPositions[0]; i<=zPositions[1];i++) { z.push(i); }
     if(zDeclines){ z = z.reverse() }
 
-    const numberSquaresMoved = x.length
+    const numberSquaresMoved = x.length -1
     
-    for(let t=1; t < numberSquaresMoved; t++ )
+    for(let t=1; t <= numberSquaresMoved; t++ )
     {
         if(board[x[t]][z[t]].piece != null){ return false }
     }
