@@ -4,17 +4,7 @@ import { DragControls } from 'three/examples/jsm/controls/DragControls.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import * as dat from 'lil-gui'
 
-/**
- * Moves
- */
-const moves = {
-    "white-pawn": [{x: 1, z: 0}],
-    "white-pawn-first": [{x: 1, z: 0}, {x: 2, z: 0}],
-    "white-pawn-capture": [{x: 1, z: -1}, {x: 1, z: 1}],
-    "black-pawn": [{x: -1, z: 0}],
-    "black-pawn-first": [{x: -1, z: 0}, {x: -2, z: 0}],
-    "black-pawn-capture": [{x: -1, z: -1}, {x: -1, z: 1}],
-}
+
 
 
 /**
@@ -63,6 +53,7 @@ const environmentMapTexture = cubeTextureLoader.load([
 // Board
 const boardGroup = new THREE.Group()
 const board = []
+const out = []
 scene.add(boardGroup)
 
 const squareGeometry = new THREE.BoxGeometry(1, 0.2, 1)
@@ -115,15 +106,17 @@ const createPiece = (position, color, name) =>
 }
 
 /**
- * Pawns
+ * Moves
  */
-for(let z=0; z<8; z++)
-{
-    createPiece(new THREE.Vector3(1, 0.3, z), "white", "pawn")
-}
-for(let z=0; z<8; z++)
-{
-    createPiece(new THREE.Vector3(6, 0.3, z), "black", "pawn")
+ const moves = {
+    "white-pawn": [{x: 1, z: 0}],
+    "white-pawn-first": [{x: 2, z: 0}],
+    "white-pawn-capture-left": [{x: 1, z: -1}],
+    "white-pawn-capture-right": [{x: 1, z: 1}],
+    "black-pawn": [{x: -1, z: 0}],
+    "black-pawn-first": [{x: -2, z: 0}],
+    "black-pawn-capture-left": [{x: -1, z: 1}],
+    "black-pawn-capture-right": [{x: -1, z: -1}],
 }
 
 /**
@@ -140,11 +133,6 @@ for(let z=0; z<8; z++)
 }
 defineRookMoves()
 
-createPiece(new THREE.Vector3(0, 0.3, 0), "white", "rook")
-createPiece(new THREE.Vector3(0, 0.3, 7), "white", "rook")
-createPiece(new THREE.Vector3(7, 0.3, 0), "black", "rook")
-createPiece(new THREE.Vector3(7, 0.3, 7), "black", "rook")
-
 /**
  * Bishops
  */
@@ -160,11 +148,6 @@ createPiece(new THREE.Vector3(7, 0.3, 7), "black", "rook")
     moves.bishop = bishopMoves
 }
 defineBishopMoves()
-
-createPiece(new THREE.Vector3(0, 0.3, 2), "white", "bishop")
-createPiece(new THREE.Vector3(0, 0.3, 5), "white", "bishop")
-createPiece(new THREE.Vector3(7, 0.3, 2), "black", "bishop")
-createPiece(new THREE.Vector3(7, 0.3, 5), "black", "bishop")
 
 /**
  * Knights
@@ -183,6 +166,82 @@ const defineKnightMoves = () => {
     ] 
 }
 defineKnightMoves()
+
+/**
+ * Queen
+ */
+const defineQueenMoves = () => {
+    let queenMoves = []
+    for(let t=-7; t<8; t++){
+        if(t===0){continue}
+        queenMoves.push({x: t, z: t})
+        queenMoves.push({x: -t, z: t})
+        queenMoves.push({x: t, z: -t})
+        queenMoves.push({x: -t, z: -t})
+        queenMoves.push({x: t, z: 0})
+        queenMoves.push({x: 0, z: t})
+    }
+    moves.queen = queenMoves
+}
+defineQueenMoves()
+
+/**
+ * King
+ */
+ const defineKingMoves = () => {
+    let kingMoves = []
+    for(let t=-1; t<2; t++){
+        if(t===0){continue}
+        kingMoves.push({x: t, z: t})
+        kingMoves.push({x: -t, z: t})
+        kingMoves.push({x: t, z: -t})
+        kingMoves.push({x: -t, z: -t})
+        kingMoves.push({x: t, z: 0})
+        kingMoves.push({x: 0, z: t})
+    }
+    moves.king = kingMoves
+}
+defineKingMoves()
+
+/**
+ *  Piece creation
+ * */ 
+
+// Pawns
+ for(let z=0; z<8; z++)
+ {
+     createPiece(new THREE.Vector3(1, 0.3, z), "white", "pawn")
+ }
+ for(let z=0; z<8; z++)
+ {
+     createPiece(new THREE.Vector3(6, 0.3, z), "black", "pawn")
+ }
+
+// Bishop
+createPiece(new THREE.Vector3(0, 0.3, 2), "white", "bishop")
+createPiece(new THREE.Vector3(0, 0.3, 5), "white", "bishop")
+createPiece(new THREE.Vector3(7, 0.3, 2), "black", "bishop")
+createPiece(new THREE.Vector3(7, 0.3, 5), "black", "bishop")
+
+// Knight
+createPiece(new THREE.Vector3(0, 0.3, 6), "white", "knight")
+createPiece(new THREE.Vector3(0, 0.3, 1), "white", "knight")
+createPiece(new THREE.Vector3(7, 0.3, 6), "black", "knight")
+createPiece(new THREE.Vector3(7, 0.3, 1), "black", "knight")
+
+// Rook
+createPiece(new THREE.Vector3(0, 0.3, 0), "white", "rook")
+createPiece(new THREE.Vector3(0, 0.3, 7), "white", "rook")
+createPiece(new THREE.Vector3(7, 0.3, 0), "black", "rook")
+createPiece(new THREE.Vector3(7, 0.3, 7), "black", "rook")
+
+// Queen
+createPiece(new THREE.Vector3(0, 0.3, 3), "white", "queen")
+createPiece(new THREE.Vector3(7, 0.3, 3), "black", "queen")
+
+// King
+createPiece(new THREE.Vector3(0, 0.3, 4), "white", "king")
+createPiece(new THREE.Vector3(7, 0.3, 4), "black", "king")
 
 /**
  * Floor
@@ -322,13 +381,7 @@ dragControls.addEventListener( 'dragstart', function ( event ) {event.object
     originPosition = position
     lightSquare(position)
 
-    switch (piece.name) {
-        case "pawn":
-            lightPawnMoves(piece)
-            break;            
-        default:
-            break;
-    }
+    lightMoves(piece)
 } );
 
 dragControls.addEventListener ( 'drag', function( event ){
@@ -373,59 +426,161 @@ const getCoordinatesOfPiece = (object) => {
     return {x, z}
 }
 
-const getValidMoves = (piece, position) => {
-    let validMoves = null
+const getValidMoves = (piece, originPosition) => {
+
+    let validMoves = []
 
     if(piece.name === "pawn")
     {
-        if (piece.color === "white")
-            {
-                if(position.x === 1){ validMoves = moves['white-pawn-first'] }
-                else { validMoves = moves['white-pawn'] }
-            }
-            else if (piece.color === "black")
-            {
-                if(position.x === 6) { validMoves = moves['black-pawn-first']}
-                else { validMoves = moves['black-pawn']}
-            }
+        validMoves = getValidPawnMoves(piece, originPosition)
     }
     else
     {
-        validMoves = moves[piece.name]
+        for(let move of moves[piece.name])
+        {
+            const goalPosition = {
+                x: originPosition.x + move.x,
+                z: originPosition.z + move.z
+            }
+    
+            // Check if Goal is on the Board
+            if(goalPosition.x < 0 || goalPosition.x >= 8 || goalPosition.z < 0 || goalPosition.z >= 8){ continue }
+    
+            // Check if lines clear
+            switch (piece.name) {
+                case "rook":
+                    if (!checkHorizontallinesClear(originPosition, goalPosition)){ continue }
+                    if (!checkVerticallinesClear(originPosition, goalPosition)){ continue }
+                    break;
+                case "bishop":
+                    if (!checkDiagonallinesClear(originPosition, goalPosition)){ continue }
+                    break;
+                case "queen":
+                    if (!checkHorizontallinesClear(originPosition, goalPosition)){ continue }
+                    if (!checkVerticallinesClear(originPosition, goalPosition)){ continue }
+                    if (!checkDiagonallinesClear(originPosition, goalPosition)){ continue }
+                    break;
+                default:
+                    break;
+            }
+
+            // check if on goal position is another piece
+            const pieceOnGoalPosition = board[goalPosition.x][goalPosition.z].piece
+            if( pieceOnGoalPosition != null )
+            { 
+                if( pieceOnGoalPosition.color === piece.color){ continue }
+            }
+    
+            validMoves.push(move)
+        }
     }
+
+
     return validMoves
 }
 
-const checkLegalMove = (originPosition, piece) => {
-    const goalPosition = getCoordinatesOfPiece(piece)
-    const move = {
-        x: goalPosition.x - originPosition.x, 
-        z: goalPosition.z - originPosition.z
-    }
-    const validMoves = getValidMoves(piece, originPosition)
-    if( !containsObject(move, validMoves) ) { return false }
-    
-    // Check if Goal is on the Board
-    if(goalPosition.x < 0 || goalPosition.x >= 8 || goalPosition.z < 0 || goalPosition.z >= 8){ return false }
-    if(piece.name == 'pawn')
+const getValidPawnMoves = (piece, originPosition) => {
+    let validPawnMoves = []
+
+    if (piece.color === "white")
     {
-        if (!checkHorizontallinesClear(originPosition, goalPosition)){ return false }
+        // if square in front of pawn is free
+        if(board[originPosition.x + 1 ][originPosition.z].piece === null)
+        {
+            validPawnMoves.push(...moves['white-pawn']) 
+
+            // on first move
+            if(originPosition.x === 1 && board[3][originPosition.z].piece === null)
+            { 
+                validPawnMoves.push(...moves['white-pawn-first']) 
+            }
+
+        }
+        
+        // capture moves
+        let rightPiece = null
+        let leftPiece = null
+
+        // if move does not leave the board on the sides
+        if (originPosition.z+1 != 8)
+        {
+            rightPiece = board[originPosition.x+1][originPosition.z+1].piece
+        }
+        if (originPosition.z-1 != -1)
+        {
+            leftPiece = board[originPosition.x+1][originPosition.z-1].piece
+        }
+
+        // when pawn is able to capture something
+        if(rightPiece != null)
+        {
+            if(rightPiece.color === "black")
+            {
+                validPawnMoves.push(...moves['white-pawn-capture-right'])
+            }
+        }
+        if(leftPiece != null)
+        {
+            if(leftPiece.color === "black")
+            {
+                validPawnMoves.push(...moves['white-pawn-capture-left'])
+            }
+        }
     }
-    if(piece.name == 'rook')
+    else if (piece.color === "black")
     {
-        if (!checkHorizontallinesClear(originPosition, goalPosition)){ return false }
-        if (!checkVerticallinesClear(originPosition, goalPosition)){ return false }
+         // if squar in front of pawn is free
+         if(board[originPosition.x - 1 ][originPosition.z].piece === null)
+         {
+            validPawnMoves.push(...moves['black-pawn'])
+ 
+            // on first move
+            if(originPosition.x === 6 && board[4][originPosition.z].piece === null)
+            { 
+                validPawnMoves.push(...moves['black-pawn-first']) 
+            }
+ 
+         }
+
+        // when pawn is able to capture something
+        let rightPiece = null
+        let leftPiece = null
+
+        // if move does not leave the board on the sides
+        if (originPosition.z-1 != -1)
+        {
+            rightPiece = board[originPosition.x-1][originPosition.z-1].piece
+        }
+        if (originPosition.z+1 != 8)
+        {
+            leftPiece = board[originPosition.x-1][originPosition.z+1].piece
+        }
+
+        if(rightPiece != null)
+        {
+            if( rightPiece.color === "white")
+            {
+                validPawnMoves.push(...moves['black-pawn-capture-right'])
+            }
+        }
+        if(leftPiece != null)
+        {
+            if(leftPiece.color === "white")
+            {
+                validPawnMoves.push(...moves['black-pawn-capture-left'])
+            }
+        }
     }
-    if(piece.name === 'bishop')
-    {
-        if (!checkDiagonallinesClear(originPosition, goalPosition)){ return false }
-    }
-    return true
+
+    return validPawnMoves
 }
 
+
 const checkHorizontallinesClear = (originPosition, goalPosition) => 
-{
+{   // vertical move
     if (originPosition.z === goalPosition.z) {return true}
+    // diagonal move
+    if (originPosition.x != goalPosition.x && originPosition.z != goalPosition.z) {return true}
 
     // create z coordinates while containing order
     const zDeclines = goalPosition.z < originPosition.z   
@@ -440,16 +595,23 @@ const checkHorizontallinesClear = (originPosition, goalPosition) =>
 
     const numberSquaresMoved = z.length -1
     
-    for(let t=1; t <= numberSquaresMoved; t++ )
+    for(let t=1; t < numberSquaresMoved; t++ )
     {
-        if(board[goalPosition.x][z[t]].piece != null){ return false }
+        if(board[goalPosition.x][z[t]].piece != null)
+        { 
+            return false 
+        }
     }    
     return true
 }
 
 const checkVerticallinesClear = (originPosition, goalPosition) => 
 {
+    // horizontal move
     if (originPosition.x === goalPosition.x) {return true}
+    // diagonal move
+    if (originPosition.x != goalPosition.x && originPosition.z != goalPosition.z) {return true}
+
 
     // create x coordinates while containing order
     const xDeclines = goalPosition.x < originPosition.x   
@@ -464,9 +626,11 @@ const checkVerticallinesClear = (originPosition, goalPosition) =>
 
     const numberSquaresMoved = x.length -1
     
-    for(let t=1; t <= numberSquaresMoved; t++ )
+    for(let t=1; t < numberSquaresMoved; t++ )
     {
-        if(board[x[t]][goalPosition.z].piece != null){ return false }
+        if(board[x[t]][goalPosition.z].piece != null){ 
+            return false 
+        }
     }    
     return true
 }
@@ -493,13 +657,56 @@ const checkDiagonallinesClear = (originPosition, goalPosition) =>
 
     const numberSquaresMoved = x.length -1
     
-    for(let t=1; t <= numberSquaresMoved; t++ )
+    for(let t=1; t < numberSquaresMoved; t++ )
     {
-        if(board[x[t]][z[t]].piece != null){ return false }
+        if(board[x[t]][z[t]].piece != null)
+        { 
+            return false 
+        }
     }
     return true
 }
 
+
+let blackOut = 0
+let whiteOut = 0
+const getOutPiecePlace = (color) =>
+{
+    if (color === "white")
+    {
+        whiteOut += 1
+        return {x: 8, y: 0.3, z: 9 + whiteOut}
+    }
+    else
+    {
+        blackOut += 1
+        return { x: -3, y: 0.3, z: -3 - blackOut}
+    }
+} 
+
+
+const checkLegalMove = (originPosition, piece) => {
+    const goalPosition = getCoordinatesOfPiece(piece)
+    const move = {
+        x: goalPosition.x - originPosition.x, 
+        z: goalPosition.z - originPosition.z
+    }
+    const validMoves = getValidMoves(piece, originPosition)
+    if( !containsObject(move, validMoves) ) { return false }
+
+    // check if on goal position is another piece
+    const pieceOnGoalPosition = board[goalPosition.x][goalPosition.z].piece
+    if( pieceOnGoalPosition != null )
+    { 
+        const outPiece = pieceOnGoalPosition
+        out.push(outPiece)
+        const outPlace = getOutPiecePlace(piece.color)
+        outPiece.position.set(outPlace.x, outPlace.y, outPlace.z)
+        scene.add(outPiece)
+    }
+
+    return true
+}
 
 /**
 * Illuminate functions
@@ -521,7 +728,7 @@ const lightSquare = (position) =>
     }
 }
 
-const lightPawnMoves = (piece) => 
+const lightMoves = (piece) => 
 {
     const position = getCoordinatesOfPiece(piece)
     const validMoves = getValidMoves(piece, position)
@@ -531,12 +738,9 @@ const lightPawnMoves = (piece) =>
         const x = position.x + move.x
         const z = position.z + move.z
         
-        if(x >= 0 && x < 8 && z >= 0 && z < 8)
-        {
-            const square = board[x][z].square
-            square.material.emissive.set( 0xaaaaaa )
-            square.material.emissiveIntensity = 0.5
-        }
+        const square = board[x][z].square
+        square.material.emissive.set( 0xaaaaaa )
+        square.material.emissiveIntensity = 0.5
     }
 }
 
