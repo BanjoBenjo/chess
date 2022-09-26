@@ -19,9 +19,34 @@ const gui = new dat.GUI()
 let resetCamera = true
 let oldSquare = null
 let originPosition = null
+let whiteToMove = true
 
-const pieces = []
+let pieces = {
+    white: [],
+    black: []
+}
 
+let kingsPosition = {
+    white: {x:0 ,z:4 }, 
+    black: {x:7 ,z:4 } 
+}
+
+let kingsInCheck = {
+    white: false,
+    black: false
+}
+
+let enPassent = 
+{
+    movedPawn: null,
+    possibleSquares: []
+}
+
+const getEnemyColor = (color) =>
+{
+    if (color === "white"){return "black"}
+    return "white"
+}
 /**
  * Base
  */
@@ -70,18 +95,43 @@ const createSquare = (black, position) => {
     return square
 }
 
-for(let x=0; x<8; x++)
+// Initialize empty board
+const initEmptyBoard = () => 
 {
-    board [x] = []
-    for(let z=0; z<8; z++)
+    for(let x=0; x<8; x++)
     {
-        const black = (z+x)%2
-        const square = createSquare(black, {x: x, y: 0, z: z})
-        boardGroup.add(square)
-        board[x][z] = {square: square, piece: null}
+        board [x] = []
+        for(let z=0; z<8; z++)
+        {
+            const black = (z+x)%2
+            const square = createSquare(black, {x: x, y: 0, z: z})
+            boardGroup.add(square)
+            board[x][z] = {square: square, piece: null}
+        }
     }
 }
+// Initialize empty atackMap
+const getEmptyAttackMap = () => 
+{
+    let attackMap = {
+        white: [],
+        black: []
+    }
 
+    for(let x=0; x<8; x++)
+    {
+        attackMap.white[x] = []
+        attackMap.black[x] = []
+        for(let z=0; z<8; z++)
+        {
+            attackMap.white[x][z] = false
+            attackMap.black[x][z] = false
+        }
+    }
+
+    return attackMap
+}
+    
 // Pieces
 const boxGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5)
 const boxMaterial = new THREE.MeshStandardMaterial({
@@ -102,11 +152,14 @@ const createPiece = (position, color, name) =>
     mesh.position.copy(position)
     scene.add(mesh)
     board[position.x][position.z].piece = mesh
-    pieces.push(mesh)
+    pieces[color].push(mesh)
 }
 
 /**
  * Moves
+ */
+/**
+ * Pawns
  */
  const moves = {
     "white-pawn": [{x: 1, z: 0}],
@@ -204,6 +257,11 @@ defineQueenMoves()
 defineKingMoves()
 
 /**
+ * Board Init
+ */
+ initEmptyBoard()
+
+/**
  *  Piece creation
  * */ 
 
@@ -267,6 +325,14 @@ scene.add(floor)
  */
 const axesHelpers = new THREE.AxesHelper()
 scene.add(axesHelpers)
+
+// toggle turn (white or black team)
+// and enable controls accordingly
+const toggleMove = () => {
+    whiteToMove = !whiteToMove
+    blackDragControls.enabled = !blackDragControls.enabled
+    whiteDragControls.enabled = !whiteDragControls.enabled
+}
 
 function containsObject(obj, list) {
     // Find if the array contains an object by comparing the property value
@@ -367,35 +433,46 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 /**
  * Controls
  */
-const dragControls = new DragControls( pieces, camera, renderer.domElement );
+const blackDragControls = new DragControls( pieces.black, camera, renderer.domElement );
+const whiteDragControls = new DragControls( pieces.white, camera, renderer.domElement );
+
 const orbitControls = new OrbitControls(camera, canvas)
 orbitControls.enableDamping = true
 
-// add event listener to highlight dragged objects
-dragControls.addEventListener( 'dragstart', function ( event ) {event.object
+
+const dragStart = (event) => {
     const piece = event.object
     orbitControls.enabled = false
-	// piece.material.emissive.set( 0xaaaaaa );
 
     const position = getCoordinatesOfPiece(event.object)
     originPosition = position
     lightSquare(position)
 
     lightMoves(piece)
-} );
+}
 
-dragControls.addEventListener ( 'drag', function( event ){
+
+const drag = (event) => {
     const position = getCoordinatesOfPiece(event.object)
     lightSquare(position)
-    event.object.position.y = 0.5; // This will prevent moving z axis, but will be on 0 line. change this to your object position of z axis.
-   })
+    event.object.position.y = 0.5; // This will prevent moving z axis
+}
 
-dragControls.addEventListener( 'dragend', function ( event ) {
+
+const dragend = (event) => {
     const piece = event.object
     orbitControls.enabled = true
+    const goalPosition = getCoordinatesOfPiece(piece)
     
     if(checkLegalMove(originPosition, piece))
     {
+        // check if on goal position is another piece
+        const pieceOnGoalPosition = board[goalPosition.x][goalPosition.z].piece
+        if( pieceOnGoalPosition != null )
+        { 
+            pieceOut(pieceOnGoalPosition)
+        }
+
         // move piece on threejs board
         piece.position.x = oldSquare.position.x
         piece.position.y = 0.3
@@ -404,6 +481,61 @@ dragControls.addEventListener( 'dragend', function ( event ) {
         // move piece in board array
         board[originPosition.x][originPosition.z].piece = null 
         board[piece.position.x][piece.position.z].piece = piece 
+
+        // En Passant and Queening from pawns
+        if(piece.name === "pawn")
+        {
+            if (enPassent.movedPawn != null)
+            {
+                if(((originPosition.x === enPassent.possibleSquares[0].x && originPosition.z === enPassent.possibleSquares[0].z)
+                || (originPosition.x === enPassent.possibleSquares[1].x && originPosition.z === enPassent.possibleSquares[1].z))
+                && piece.position.z === enPassent.movedPawn.position.z)
+                {
+                    board[enPassent.movedPawn.position.x][enPassent.movedPawn.position.z].piece = null 
+                    pieceOut(enPassent.movedPawn)
+                }
+            }
+            resetEnPassent()
+
+            if(piece.color === "white")
+            {
+                if( piece.position.x - originPosition.x === 2)
+                {
+                    enPassent.movedPawn = piece
+                    enPassent.possibleSquares.push({x:3, z:originPosition.z - 1})
+                    enPassent.possibleSquares.push({x:3, z:originPosition.z + 1})
+                }
+                if( piece.position.x === 7)
+                {
+                    piece.position.set(-3, 0.3, -2)
+                    createPiece(new THREE.Vector3(oldSquare.position.x, 0.3, oldSquare.position.z), "white", "queen")
+                }
+                
+            }
+            if(piece.color === "black")
+            {
+                if( originPosition.x - piece.position.x === 2)
+                {
+                    enPassent.movedPawn = piece
+                    enPassent.possibleSquares.push({x:4, z:originPosition.z - 1})
+                    enPassent.possibleSquares.push({x:4, z:originPosition.z + 1})
+                }
+                if(piece.position.x === 0)
+                {
+                    piece.position.set(8, 0.3, 8)
+                    createPiece(new THREE.Vector3(oldSquare.position.x, 0.3, oldSquare.position.z), "black", "queen")
+                }
+            }
+        } 
+
+        // keep position of kings up to date to make checking for "checks" more efficient
+        if( piece.name === "king" )
+        {
+            kingsPosition[piece.color].x = piece.position.x
+            kingsPosition[piece.color].z = piece.position.z
+        }
+
+        toggleMove()
     }
     else
     {
@@ -412,9 +544,19 @@ dragControls.addEventListener( 'dragend', function ( event ) {
         piece.position.z = originPosition.z
     }
 
-    // piece.material.emissive.set( 0x000000 );
     turnOffAllSquares()
-} );
+}
+
+
+blackDragControls.addEventListener('dragstart', dragStart);
+whiteDragControls.addEventListener('dragstart', dragStart);
+blackDragControls.addEventListener ('drag', drag)
+whiteDragControls.addEventListener ('drag', drag)
+blackDragControls.addEventListener ('dragend', dragend)
+whiteDragControls.addEventListener ('dragend', dragend)
+
+blackDragControls.enabled = false
+
 
 /**
  * Helper Functions
@@ -494,10 +636,9 @@ const getValidPawnMoves = (piece, originPosition) => {
             { 
                 validPawnMoves.push(...moves['white-pawn-first']) 
             }
-
         }
         
-        // capture moves
+        // pieces that could potentially be captured
         let rightPiece = null
         let leftPiece = null
 
@@ -526,10 +667,26 @@ const getValidPawnMoves = (piece, originPosition) => {
                 validPawnMoves.push(...moves['white-pawn-capture-left'])
             }
         }
+
+        if(enPassent.movedPawn != null)
+        {
+            if((originPosition.x === enPassent.possibleSquares[0].x && originPosition.z === enPassent.possibleSquares[0].z)
+            || (originPosition.x === enPassent.possibleSquares[1].x && originPosition.z === enPassent.possibleSquares[1].z))
+            {
+                if(originPosition.z < enPassent.movedPawn.position.z)
+                {
+                    validPawnMoves.push(...moves['white-pawn-capture-right'])
+                }
+                else
+                {
+                    validPawnMoves.push(...moves['white-pawn-capture-left'])
+                }
+            }
+        }
     }
     else if (piece.color === "black")
     {
-         // if squar in front of pawn is free
+         // if square in front of pawn is free
          if(board[originPosition.x - 1 ][originPosition.z].piece === null)
          {
             validPawnMoves.push(...moves['black-pawn'])
@@ -539,7 +696,6 @@ const getValidPawnMoves = (piece, originPosition) => {
             { 
                 validPawnMoves.push(...moves['black-pawn-first']) 
             }
- 
          }
 
         // when pawn is able to capture something
@@ -570,12 +726,36 @@ const getValidPawnMoves = (piece, originPosition) => {
                 validPawnMoves.push(...moves['black-pawn-capture-left'])
             }
         }
+
+        if(enPassent.movedPawn != null)
+        {
+
+            if((originPosition.x === enPassent.possibleSquares[0].x && originPosition.z === enPassent.possibleSquares[0].z)
+            || (originPosition.x === enPassent.possibleSquares[1].x && originPosition.z === enPassent.possibleSquares[1].z))        
+            {
+                if(originPosition.z < enPassent.movedPawn.position.z)
+                {
+                    validPawnMoves.push(...moves['black-pawn-capture-left'])
+                }
+                else
+                {
+                    validPawnMoves.push(...moves['black-pawn-capture-right'])
+                }
+            }
+        }
     }
 
     return validPawnMoves
 }
 
+const resetEnPassent = () => {
+    enPassent.movedPawn = null
+    enPassent.possibleSquares = []
+}
 
+// checks all squares between origin and goal position
+// returns true when they are free
+// returns false when the path is blocked
 const checkHorizontallinesClear = (originPosition, goalPosition) => 
 {   // vertical move
     if (originPosition.z === goalPosition.z) {return true}
@@ -605,6 +785,10 @@ const checkHorizontallinesClear = (originPosition, goalPosition) =>
     return true
 }
 
+
+// checks all squares between origin and goal position
+// returns true when they are free
+// returns false when the path is blocked
 const checkVerticallinesClear = (originPosition, goalPosition) => 
 {
     // horizontal move
@@ -635,6 +819,9 @@ const checkVerticallinesClear = (originPosition, goalPosition) =>
     return true
 }
 
+// checks all squares between origin and goal position
+// returns true when they are free
+// returns false when the path is blocked
 const checkDiagonallinesClear = (originPosition, goalPosition) => 
 {
     // no diagonal move done
@@ -670,6 +857,7 @@ const checkDiagonallinesClear = (originPosition, goalPosition) =>
 
 let blackOut = 0
 let whiteOut = 0
+// return a position at the side of the field for the taken pieces
 const getOutPiecePlace = (color) =>
 {
     if (color === "white")
@@ -684,6 +872,41 @@ const getOutPiecePlace = (color) =>
     }
 } 
 
+const pieceOut = (piece) => {
+    out.push(piece)
+    const outPlace = getOutPiecePlace(piece.color)
+    piece.position.set(outPlace.x, outPlace.y, outPlace.z)
+    scene.add(piece)
+}
+
+// returns an object with 2 2d arrays of the board and every attacked square on it
+// ( an attacked square is a square where the enemy king is in check) 
+const getAttackMap = () => {
+    let attackMap = getEmptyAttackMap()
+    
+    // loop over board
+    for(let x=0; x<8; x++)
+    {
+        for(let z=0; z<8; z++)
+        {
+            if(board[x][z].piece != null)
+            {
+                const piece = board[x][z].piece
+                const possibleMoves = getValidMoves(piece, getCoordinatesOfPiece(piece))
+
+                for(let move of possibleMoves)
+                {
+                    const goalPosition = {
+                        x: x + move.x, 
+                        z: z + move.z
+                    }
+                    attackMap[piece.color][goalPosition.x][goalPosition.z] = true
+                }
+            }
+        }
+    }
+    return attackMap
+}
 
 const checkLegalMove = (originPosition, piece) => {
     const goalPosition = getCoordinatesOfPiece(piece)
@@ -693,16 +916,53 @@ const checkLegalMove = (originPosition, piece) => {
     }
     const validMoves = getValidMoves(piece, originPosition)
     if( !containsObject(move, validMoves) ) { return false }
+    if( !checkKingChecks(piece, goalPosition)) { return false }
 
-    // check if on goal position is another piece
-    const pieceOnGoalPosition = board[goalPosition.x][goalPosition.z].piece
-    if( pieceOnGoalPosition != null )
-    { 
-        const outPiece = pieceOnGoalPosition
-        out.push(outPiece)
-        const outPlace = getOutPiecePlace(piece.color)
-        outPiece.position.set(outPlace.x, outPlace.y, outPlace.z)
-        scene.add(outPiece)
+    return true
+}
+
+const checkKingChecks = (piece, goalPosition) => {
+    // make move on board
+    let ownKingPosition = null
+    board[originPosition.x][originPosition.z].piece = null 
+    const buffer = board[goalPosition.x][goalPosition.z].piece
+    board[goalPosition.x][goalPosition.z].piece = piece 
+
+    // get attackMap
+    const attackMap = getAttackMap()
+
+    // undo move on board
+    board[originPosition.x][originPosition.z].piece = piece 
+    board[goalPosition.x][goalPosition.z].piece = buffer 
+
+    if (piece.name === "king")
+    {
+        ownKingPosition = goalPosition
+    }
+    else
+    {
+        ownKingPosition = kingsPosition[piece.color]
+    }
+    
+    const enemyKingPosition = kingsPosition[getEnemyColor(piece.color)]
+    const enemyAttackMap = attackMap[getEnemyColor(piece.color)]
+    const ownAttackMap = attackMap[piece.color]
+
+    // check if own king is in check after move
+    if(enemyAttackMap[ownKingPosition.x][ownKingPosition.z] === true)
+    {
+        // own king is in check > move not valid
+        return false
+    }
+    else 
+    {
+        kingsInCheck[piece.color] = false
+    }
+
+    if(ownAttackMap[enemyKingPosition.x][enemyKingPosition.z] === true)
+    {
+        // enemy King in check
+        kingsInCheck[getEnemyColor(piece.color)] = true
     }
 
     return true
