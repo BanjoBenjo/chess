@@ -5,8 +5,6 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import * as dat from 'lil-gui'
 
 
-
-
 /**
  * Debug
  */
@@ -40,6 +38,20 @@ let enPassent =
 {
     movedPawn: null,
     possibleSquares: []
+}
+
+let rochade =
+{
+    white: {
+        kingMoved: false,
+        rookShortMoved: false,
+        rookLongMoved: false
+    },
+    black: {
+        kingMoved: false,
+        rookShortMoved: false,
+        rookLongMoved: false
+    },
 }
 
 const getEnemyColor = (color) =>
@@ -253,6 +265,10 @@ defineQueenMoves()
         kingMoves.push({x: 0, z: t})
     }
     moves.king = kingMoves
+    
+    moves["king-short-rochade"] = [{x: 0, z: 2}]
+    moves["king-long-rochade"] = [{x: 0, z: -3}]
+    console.log(moves)
 }
 defineKingMoves()
 
@@ -531,8 +547,36 @@ const dragend = (event) => {
         // keep position of kings up to date to make checking for "checks" more efficient
         if( piece.name === "king" )
         {
+            // Long Rochade moved
+            if(kingsPosition[piece.color].z - piece.position.z === 3)
+            {
+                // move rook in board array
+                const rook = board[piece.position.x][0].piece 
+                board[piece.position.x][0].piece = null
+                board[piece.position.x][3].piece = rook 
+                rook.position.z = 3
+
+                rochade[piece.color].kingMoved = true
+            }
+            // short Rochade moved
+            if(piece.position.z - kingsPosition[piece.color].z === 2 )
+            {
+                // move rook in board array
+                const rook = board[piece.position.x][7].piece 
+                board[piece.position.x][7].piece = null
+                board[piece.position.x][5].piece = rook 
+                rook.position.z = 5
+
+                rochade[piece.color].kingMoved = true
+            }
             kingsPosition[piece.color].x = piece.position.x
             kingsPosition[piece.color].z = piece.position.z
+        }
+
+        // When king or rook moves rochade is no longer possible
+        if( piece.name === "king" || piece.name === "rook")
+        {
+            rochade[piece.color].kingMoved = true
         }
 
         toggleMove()
@@ -753,6 +797,51 @@ const resetEnPassent = () => {
     enPassent.possibleSquares = []
 }
 
+const getPossibleRochade = (piece, originPosition) => {
+    if(piece.name != "king") { return [] }
+    if(rochade[piece.color].kingMoved) { return [] }
+    
+    let validKingMoves = []
+
+    const enemyColor = getEnemyColor(piece.color)
+    const attackMap = getAttackMap()[enemyColor]
+
+    if(!rochade[piece.color].rookLongMoved) 
+    { 
+        const rookPosition = originPosition.z - 3
+        let check = false
+
+        if(checkHorizontallinesClear(originPosition, {x: originPosition.x, z: rookPosition}))
+        {
+            for(let i= originPosition.z; i > rookPosition; i -- )
+            {
+                if(attackMap[originPosition.x][i] === true) { check = true }
+            }
+            if(!check){ 
+                validKingMoves.push(...moves["king-long-rochade"])}
+        }
+
+    }
+    if(!rochade[piece.color].rookShortMoved) 
+    { 
+        const rookPosition = originPosition.z + 2
+        let check = false
+
+        if(checkHorizontallinesClear(originPosition, {x: originPosition.x, z: rookPosition}))
+        {
+            for(let i= originPosition.z; i < rookPosition; i ++ )
+            {
+                if(attackMap[originPosition.x][i] === true) { check = true }
+            }
+            if(!check){ 
+                validKingMoves.push(...moves["king-short-rochade"])}
+        }
+    }
+
+    return validKingMoves
+
+}
+
 // checks all squares between origin and goal position
 // returns true when they are free
 // returns false when the path is blocked
@@ -900,6 +989,9 @@ const getAttackMap = () => {
                         x: x + move.x, 
                         z: z + move.z
                     }
+                    console.log(attackMap)
+                    console.log(goalPosition)
+                    console.log(move)
                     attackMap[piece.color][goalPosition.x][goalPosition.z] = true
                 }
             }
@@ -915,6 +1007,7 @@ const checkLegalMove = (originPosition, piece) => {
         z: goalPosition.z - originPosition.z
     }
     const validMoves = getValidMoves(piece, originPosition)
+    validMoves.push(... getPossibleRochade(piece, originPosition))
     if( !containsObject(move, validMoves) ) { return false }
     if( !checkKingChecks(piece, goalPosition)) { return false }
 
