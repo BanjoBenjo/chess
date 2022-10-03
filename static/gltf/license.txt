@@ -1,0 +1,11 @@
+Model Information:
+* title:	chessPieces3d_2d
+* source:	https://sketchfab.com/3d-models/chesspieces3d-2d-fc9a4c63cd8147afbff4b6560f234905
+* author:	SpiderGuyA360 (https://sketchfab.com/spider.guya360)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "chessPieces3d_2d" (https://sketchfab.com/3d-models/chesspieces3d-2d-fc9a4c63cd8147afbff4b6560f234905) by SpiderGuyA360 (https://sketchfab.com/spider.guya360) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

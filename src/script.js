@@ -3,6 +3,8 @@ import * as THREE from 'three'
 import { DragControls } from 'three/examples/jsm/controls/DragControls.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import * as dat from 'lil-gui'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+
 
 
 /**
@@ -167,6 +169,194 @@ const createPiece = (position, color, name) =>
     pieces[color].push(mesh)
 }
 
+const createPieceByModel = (position, color, name, model) => 
+{
+    model.name = name
+    model.color = color
+    model.castShadow = true
+    model.position.copy(position)
+    scene.add(model)
+    board[position.x][position.z].piece = model
+    pieces[color].push(model)
+}
+
+/**
+ * Board Init
+ */
+ initEmptyBoard()
+
+
+const gltfLoader = new GLTFLoader()
+const scaleFactor = 0.6
+let blackQueenModel;
+let whiteQueenModel;
+
+/**
+ * Piece Loading and Creation
+ */
+
+ gltfLoader.load(
+    '/gltf/black_pawn.gltf',
+    (gltf) =>
+    {
+        const model = gltf.scene.children[0]
+        model.scale.set(model.scale.x * scaleFactor, model.scale.y * scaleFactor, model.scale.z * scaleFactor)
+        model.rotation.z = Math.PI * 0.5
+        
+        for(let z=0; z<8; z++)
+        {
+            createPieceByModel(new THREE.Vector3(6, 0.5, z), "black", "pawn", model.clone())
+        }
+    }
+)
+
+gltfLoader.load(
+    '/gltf/black_rook.gltf',
+    (gltf) =>
+    {
+        const model = gltf.scene.children[0]
+        model.scale.set(model.scale.x * scaleFactor, model.scale.y * scaleFactor, model.scale.z * scaleFactor)
+        model.rotation.z = Math.PI * 0.5
+        
+        createPieceByModel(new THREE.Vector3(7, 0.8, 0), "black", "rook", model.clone())
+        createPieceByModel(new THREE.Vector3(7, 0.8, 7), "black", "rook", model.clone())
+    }
+)
+
+gltfLoader.load(
+    '/gltf/black_knight.gltf',
+    (gltf) =>
+    {
+        const model = gltf.scene.children[0]
+        model.scale.set(model.scale.x * scaleFactor, model.scale.y * scaleFactor, model.scale.z * scaleFactor)
+        model.rotation.z = - Math.PI
+        
+        createPieceByModel(new THREE.Vector3(7, 0.5, 6), "black", "knight", model.clone())
+        createPieceByModel(new THREE.Vector3(7, 0.5, 1), "black", "knight", model.clone())
+    }
+)
+
+gltfLoader.load(
+    '/gltf/black_bishop.gltf',
+    (gltf) =>
+    {
+        const model = gltf.scene.children[0]
+        model.scale.set(model.scale.x * scaleFactor, model.scale.y * scaleFactor, model.scale.z * scaleFactor)
+        model.rotation.z = Math.PI * 0.5
+        
+        createPieceByModel(new THREE.Vector3(7, 0.8, 2), "black", "bishop", model.clone())
+        createPieceByModel(new THREE.Vector3(7, 0.8, 5), "black", "bishop", model.clone())
+    
+    }
+)
+
+gltfLoader.load(
+    '/gltf/black_queen.gltf',
+    (gltf) =>
+    {
+        blackQueenModel = gltf.scene.children[0]
+        blackQueenModel.scale.set(blackQueenModel.scale.x * scaleFactor, blackQueenModel.scale.y * scaleFactor, blackQueenModel.scale.z * scaleFactor)
+        blackQueenModel.rotation.z = Math.PI * 0.5
+
+        createPieceByModel(new THREE.Vector3(7, 0.9, 3), "black", "queen", blackQueenModel.clone())    
+    }
+)
+
+gltfLoader.load(
+    '/gltf/black_king.gltf',
+    (gltf) =>
+    {
+        const model = gltf.scene.children[0]
+        model.scale.set(model.scale.x * scaleFactor, model.scale.y * scaleFactor, model.scale.z * scaleFactor)
+        model.rotation.z = Math.PI * 0.5
+        
+        createPieceByModel(new THREE.Vector3(7, 1.2, 4), "black", "king", model.clone())
+    
+    }
+)
+
+// White Pieces
+gltfLoader.load(
+    '/gltf/white_pawn.gltf',
+    (gltf) =>
+    {
+        const model = gltf.scene.children[0]
+        model.scale.set(model.scale.x * scaleFactor, model.scale.y * scaleFactor, model.scale.z * scaleFactor)
+        model.rotation.z = Math.PI * -0.5
+        
+        for(let z=0; z<8; z++)
+        {
+            createPieceByModel(new THREE.Vector3(1, 0.5, z), "white", "pawn", model.clone())
+        }
+    }
+)
+
+gltfLoader.load(
+    '/gltf/white_rook.gltf',
+    (gltf) =>
+    {
+        const model = gltf.scene.children[0]
+        model.scale.set(model.scale.x * scaleFactor, model.scale.y * scaleFactor, model.scale.z * scaleFactor)
+        model.rotation.z = Math.PI * -0.5
+        
+        createPieceByModel(new THREE.Vector3(0, 0.8, 0), "white", "rook", model.clone())
+        createPieceByModel(new THREE.Vector3(0, 0.8, 7), "white", "rook", model.clone())
+    }
+)
+
+gltfLoader.load(
+    '/gltf/white_knight.gltf',
+    (gltf) =>
+    {
+        const model = gltf.scene.children[0]
+        model.scale.set(model.scale.x * scaleFactor, model.scale.y * scaleFactor, model.scale.z * scaleFactor)
+        model.rotation.z = Math.PI * 0.5
+
+        createPieceByModel(new THREE.Vector3(0, 0.5, 6), "white", "knight", model.clone())
+        createPieceByModel(new THREE.Vector3(0, 0.5, 1), "white", "knight", model.clone())
+    }
+)
+
+gltfLoader.load(
+    '/gltf/white_bishop.gltf',
+    (gltf) =>
+    {
+        const model = gltf.scene.children[0]
+        model.scale.set(model.scale.x * scaleFactor, model.scale.y * scaleFactor, model.scale.z * scaleFactor)
+        model.rotation.z = Math.PI * -0.5
+        
+        createPieceByModel(new THREE.Vector3(0, 0.8, 2), "white", "bishop", model.clone())
+        createPieceByModel(new THREE.Vector3(0, 0.8, 5), "white", "bishop", model.clone())
+    
+    }
+)
+
+gltfLoader.load(
+    '/gltf/white_queen.gltf',
+    (gltf) =>
+    {
+        whiteQueenModel = gltf.scene.children[0]
+        whiteQueenModel.scale.set(whiteQueenModel.scale.x * scaleFactor, whiteQueenModel.scale.y * scaleFactor, whiteQueenModel.scale.z * scaleFactor)
+        whiteQueenModel.rotation.z = Math.PI * -0.5
+
+        createPieceByModel(new THREE.Vector3(0, 0.9, 3), "white", "queen", whiteQueenModel.clone())    
+    }
+)
+
+gltfLoader.load(
+    '/gltf/white_king.gltf',
+    (gltf) =>
+    {
+        const model = gltf.scene.children[0]
+        model.scale.set(model.scale.x * scaleFactor, model.scale.y * scaleFactor, model.scale.z * scaleFactor)
+        model.rotation.z = Math.PI * -0.5
+        
+        createPieceByModel(new THREE.Vector3(0, 1.2, 4), "white", "king", model.clone())
+    
+    }
+)
+
+
 /**
  * Moves
  */
@@ -268,54 +458,11 @@ defineQueenMoves()
     
     moves["king-short-rochade"] = [{x: 0, z: 2}]
     moves["king-long-rochade"] = [{x: 0, z: -3}]
-    console.log(moves)
 }
 defineKingMoves()
 
-/**
- * Board Init
- */
- initEmptyBoard()
 
-/**
- *  Piece creation
- * */ 
 
-// Pawns
- for(let z=0; z<8; z++)
- {
-     createPiece(new THREE.Vector3(1, 0.3, z), "white", "pawn")
- }
- for(let z=0; z<8; z++)
- {
-     createPiece(new THREE.Vector3(6, 0.3, z), "black", "pawn")
- }
-
-// Bishop
-createPiece(new THREE.Vector3(0, 0.3, 2), "white", "bishop")
-createPiece(new THREE.Vector3(0, 0.3, 5), "white", "bishop")
-createPiece(new THREE.Vector3(7, 0.3, 2), "black", "bishop")
-createPiece(new THREE.Vector3(7, 0.3, 5), "black", "bishop")
-
-// Knight
-createPiece(new THREE.Vector3(0, 0.3, 6), "white", "knight")
-createPiece(new THREE.Vector3(0, 0.3, 1), "white", "knight")
-createPiece(new THREE.Vector3(7, 0.3, 6), "black", "knight")
-createPiece(new THREE.Vector3(7, 0.3, 1), "black", "knight")
-
-// Rook
-createPiece(new THREE.Vector3(0, 0.3, 0), "white", "rook")
-createPiece(new THREE.Vector3(0, 0.3, 7), "white", "rook")
-createPiece(new THREE.Vector3(7, 0.3, 0), "black", "rook")
-createPiece(new THREE.Vector3(7, 0.3, 7), "black", "rook")
-
-// Queen
-createPiece(new THREE.Vector3(0, 0.3, 3), "white", "queen")
-createPiece(new THREE.Vector3(7, 0.3, 3), "black", "queen")
-
-// King
-createPiece(new THREE.Vector3(0, 0.3, 4), "white", "king")
-createPiece(new THREE.Vector3(7, 0.3, 4), "black", "king")
 
 /**
  * Floor
@@ -470,8 +617,9 @@ const dragStart = (event) => {
 
 const drag = (event) => {
     const position = getCoordinatesOfPiece(event.object)
+
     lightSquare(position)
-    event.object.position.y = 0.5; // This will prevent moving z axis
+    event.object.position.y = originPosition.y; // This will prevent moving z axis
 }
 
 
@@ -491,7 +639,6 @@ const dragend = (event) => {
 
         // move piece on threejs board
         piece.position.x = oldSquare.position.x
-        piece.position.y = 0.3
         piece.position.z = oldSquare.position.z
 
         // move piece in board array
@@ -523,8 +670,10 @@ const dragend = (event) => {
                 }
                 if( piece.position.x === 7)
                 {
-                    piece.position.set(-3, 0.3, -2)
-                    createPiece(new THREE.Vector3(oldSquare.position.x, 0.3, oldSquare.position.z), "white", "queen")
+                    piece.position.x = -3
+                    piece.position.z = -2
+                    createPieceByModel(new THREE.Vector3(oldSquare.position.x, 0.9, oldSquare.position.z), "white", "queen", whiteQueenModel.clone())    
+
                 }
                 
             }
@@ -538,8 +687,10 @@ const dragend = (event) => {
                 }
                 if(piece.position.x === 0)
                 {
-                    piece.position.set(8, 0.3, 8)
-                    createPiece(new THREE.Vector3(oldSquare.position.x, 0.3, oldSquare.position.z), "black", "queen")
+                    piece.position.x = 8
+                    piece.position.z = 8
+                    createPieceByModel(new THREE.Vector3(oldSquare.position.x, 0.9, oldSquare.position.z), "black", "queen", blackQueenModel.clone())    
+
                 }
             }
         } 
@@ -584,7 +735,6 @@ const dragend = (event) => {
     else
     {
         piece.position.x = originPosition.x
-        piece.position.y = 0.3
         piece.position.z = originPosition.z
     }
 
@@ -607,9 +757,10 @@ blackDragControls.enabled = false
  */
 const getCoordinatesOfPiece = (object) => {
     const x = Math.round(object.position.x)
+    const y = object.position.y
     const z = Math.round(object.position.z)
 
-    return {x, z}
+    return {x, y, z}
 }
 
 const getValidMoves = (piece, originPosition) => {
@@ -671,59 +822,64 @@ const getValidPawnMoves = (piece, originPosition) => {
     if (piece.color === "white")
     {
         // if square in front of pawn is free
-        if(board[originPosition.x + 1 ][originPosition.z].piece === null)
+        // if pawn is not on queening square
+        if(originPosition.x != 7)
         {
-            validPawnMoves.push(...moves['white-pawn']) 
 
-            // on first move
-            if(originPosition.x === 1 && board[3][originPosition.z].piece === null)
-            { 
-                validPawnMoves.push(...moves['white-pawn-first']) 
-            }
-        }
-        
-        // pieces that could potentially be captured
-        let rightPiece = null
-        let leftPiece = null
-
-        // if move does not leave the board on the sides
-        if (originPosition.z+1 != 8)
-        {
-            rightPiece = board[originPosition.x+1][originPosition.z+1].piece
-        }
-        if (originPosition.z-1 != -1)
-        {
-            leftPiece = board[originPosition.x+1][originPosition.z-1].piece
-        }
-
-        // when pawn is able to capture something
-        if(rightPiece != null)
-        {
-            if(rightPiece.color === "black")
+            if(board[originPosition.x + 1 ][originPosition.z].piece === null)
             {
-                validPawnMoves.push(...moves['white-pawn-capture-right'])
+                validPawnMoves.push(...moves['white-pawn']) 
+                
+                // on first move
+                if(originPosition.x === 1 && board[3][originPosition.z].piece === null)
+                { 
+                    validPawnMoves.push(...moves['white-pawn-first']) 
+                }
             }
-        }
-        if(leftPiece != null)
-        {
-            if(leftPiece.color === "black")
+            
+            // pieces that could potentially be captured
+            let rightPiece = null
+            let leftPiece = null
+            
+            // if move does not leave the board on the sides
+            if (originPosition.z+1 != 8)
             {
-                validPawnMoves.push(...moves['white-pawn-capture-left'])
+                rightPiece = board[originPosition.x+1][originPosition.z+1].piece
             }
-        }
-
-        if(enPassent.movedPawn != null)
-        {
-            if((originPosition.x === enPassent.possibleSquares[0].x && originPosition.z === enPassent.possibleSquares[0].z)
-            || (originPosition.x === enPassent.possibleSquares[1].x && originPosition.z === enPassent.possibleSquares[1].z))
+            if (originPosition.z-1 != -1)
             {
-                if(originPosition.z < enPassent.movedPawn.position.z)
+                leftPiece = board[originPosition.x+1][originPosition.z-1].piece
+            }
+            
+            // when pawn is able to capture something
+            if(rightPiece != null)
+            {
+                if(rightPiece.color === "black")
                 {
                     validPawnMoves.push(...moves['white-pawn-capture-right'])
                 }
-                else
+            }
+            if(leftPiece != null)
+            {
+                if(leftPiece.color === "black")
                 {
                     validPawnMoves.push(...moves['white-pawn-capture-left'])
+                }
+            }
+            
+            if(enPassent.movedPawn != null)
+            {
+                if((originPosition.x === enPassent.possibleSquares[0].x && originPosition.z === enPassent.possibleSquares[0].z)
+                || (originPosition.x === enPassent.possibleSquares[1].x && originPosition.z === enPassent.possibleSquares[1].z))
+                {
+                    if(originPosition.z < enPassent.movedPawn.position.z)
+                    {
+                        validPawnMoves.push(...moves['white-pawn-capture-right'])
+                    }
+                    else
+                    {
+                        validPawnMoves.push(...moves['white-pawn-capture-left'])
+                    }
                 }
             }
         }
@@ -731,59 +887,64 @@ const getValidPawnMoves = (piece, originPosition) => {
     else if (piece.color === "black")
     {
          // if square in front of pawn is free
-         if(board[originPosition.x - 1 ][originPosition.z].piece === null)
+         // if pawn is not on queening square
+         if(originPosition.x != 0)
          {
-            validPawnMoves.push(...moves['black-pawn'])
- 
-            // on first move
-            if(originPosition.x === 6 && board[4][originPosition.z].piece === null)
-            { 
-                validPawnMoves.push(...moves['black-pawn-first']) 
-            }
-         }
 
-        // when pawn is able to capture something
-        let rightPiece = null
-        let leftPiece = null
-
-        // if move does not leave the board on the sides
-        if (originPosition.z-1 != -1)
-        {
-            rightPiece = board[originPosition.x-1][originPosition.z-1].piece
-        }
-        if (originPosition.z+1 != 8)
-        {
-            leftPiece = board[originPosition.x-1][originPosition.z+1].piece
-        }
-
-        if(rightPiece != null)
-        {
-            if( rightPiece.color === "white")
+            if(board[originPosition.x - 1 ][originPosition.z].piece === null)
             {
-                validPawnMoves.push(...moves['black-pawn-capture-right'])
+                validPawnMoves.push(...moves['black-pawn'])
+                
+                // on first move
+                if(originPosition.x === 6 && board[4][originPosition.z].piece === null)
+                { 
+                    validPawnMoves.push(...moves['black-pawn-first']) 
+                }
             }
-        }
-        if(leftPiece != null)
-        {
-            if(leftPiece.color === "white")
+            
+            // when pawn is able to capture something
+            let rightPiece = null
+            let leftPiece = null
+            
+            // if move does not leave the board on the sides
+            if (originPosition.z-1 != -1)
             {
-                validPawnMoves.push(...moves['black-pawn-capture-left'])
+                rightPiece = board[originPosition.x-1][originPosition.z-1].piece
             }
-        }
-
-        if(enPassent.movedPawn != null)
-        {
-
-            if((originPosition.x === enPassent.possibleSquares[0].x && originPosition.z === enPassent.possibleSquares[0].z)
-            || (originPosition.x === enPassent.possibleSquares[1].x && originPosition.z === enPassent.possibleSquares[1].z))        
+            if (originPosition.z+1 != 8)
             {
-                if(originPosition.z < enPassent.movedPawn.position.z)
+                leftPiece = board[originPosition.x-1][originPosition.z+1].piece
+            }
+            
+            if(rightPiece != null)
+            {
+                if( rightPiece.color === "white")
+                {
+                    validPawnMoves.push(...moves['black-pawn-capture-right'])
+                }
+            }
+            if(leftPiece != null)
+            {
+                if(leftPiece.color === "white")
                 {
                     validPawnMoves.push(...moves['black-pawn-capture-left'])
                 }
-                else
+            }
+            
+            if(enPassent.movedPawn != null)
+            {
+                
+                if((originPosition.x === enPassent.possibleSquares[0].x && originPosition.z === enPassent.possibleSquares[0].z)
+                || (originPosition.x === enPassent.possibleSquares[1].x && originPosition.z === enPassent.possibleSquares[1].z))        
                 {
-                    validPawnMoves.push(...moves['black-pawn-capture-right'])
+                    if(originPosition.z < enPassent.movedPawn.position.z)
+                    {
+                        validPawnMoves.push(...moves['black-pawn-capture-left'])
+                    }
+                    else
+                    {
+                        validPawnMoves.push(...moves['black-pawn-capture-right'])
+                    }
                 }
             }
         }
@@ -947,23 +1108,24 @@ const checkDiagonallinesClear = (originPosition, goalPosition) =>
 let blackOut = 0
 let whiteOut = 0
 // return a position at the side of the field for the taken pieces
-const getOutPiecePlace = (color) =>
+const getOutPiecePlace = (piece) =>
 {
+    const color = piece.color
     if (color === "white")
     {
         whiteOut += 1
-        return {x: 8, y: 0.3, z: 9 + whiteOut}
+        return {x: 8, y: piece.position.y, z: 9 + whiteOut}
     }
     else
     {
         blackOut += 1
-        return { x: -3, y: 0.3, z: -3 - blackOut}
+        return { x: -3, y: piece.position.y, z: -3 - blackOut}
     }
 } 
 
 const pieceOut = (piece) => {
     out.push(piece)
-    const outPlace = getOutPiecePlace(piece.color)
+    const outPlace = getOutPiecePlace(piece)
     piece.position.set(outPlace.x, outPlace.y, outPlace.z)
     scene.add(piece)
 }
@@ -989,9 +1151,6 @@ const getAttackMap = () => {
                         x: x + move.x, 
                         z: z + move.z
                     }
-                    console.log(attackMap)
-                    console.log(goalPosition)
-                    console.log(move)
                     attackMap[piece.color][goalPosition.x][goalPosition.z] = true
                 }
             }
