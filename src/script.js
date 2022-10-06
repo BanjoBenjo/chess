@@ -147,37 +147,48 @@ const getEmptyAttackMap = () =>
 }
     
 // Pieces
-const boxGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5)
+
 const boxMaterial = new THREE.MeshStandardMaterial({
             metalness: 0.3,
             roughness: 0.4,
             envMap: environmentMapTexture,
-            envMapIntensity: 0.5
+            envMapIntensity: 0.5,
+            transparent: true,
+            opacity: 0,
+            // wireframe: true
         })
 
-const createPiece = (position, color, name) => 
-{
-    const material = boxMaterial.clone()
-    material.color.set(new THREE.Color((color === "black"? 'grey' : 'white')))
-    const mesh = new THREE.Mesh(boxGeometry, material)
-    mesh.name = name
-    mesh.color = color
-    mesh.castShadow = true
-    mesh.position.copy(position)
-    scene.add(mesh)
-    board[position.x][position.z].piece = mesh
-    pieces[color].push(mesh)
-}
+let box3 = new THREE.Box3();
+let size = new THREE.Vector3(); // create once and reuse
 
 const createPieceByModel = (position, color, name, model) => 
 {
-    model.name = name
-    model.color = color
-    model.castShadow = true
-    model.position.copy(position)
-    scene.add(model)
-    board[position.x][position.z].piece = model
-    pieces[color].push(model)
+    console.log(model)
+    const material = boxMaterial.clone()
+    material.color.set(new THREE.Color((color === "black"? 'grey' : 'white')))
+
+    
+    // model.position.copy(position)
+    
+    let boxHelper = new THREE.BoxHelper(model, 0xffffff);
+    box3.setFromObject( boxHelper );
+    box3.getSize( size ); // pass in size so a new Vector3 is not allocated
+    console.log( size )
+    
+    const boxGeometry = new THREE.BoxGeometry(1, size.y + 0.8, 1)
+    const piece_box = new THREE.Mesh(boxGeometry, material)
+    
+
+    piece_box.name = name
+    piece_box.color = color
+    piece_box.castShadow = true    
+    piece_box.position.copy(position)
+    scene.add(piece_box)
+    piece_box.add(model)
+    //piece_box.position.copy(position)
+
+    board[position.x][position.z].piece = piece_box
+    pieces[color].push(piece_box)
 }
 
 /**
@@ -202,6 +213,8 @@ let whiteQueenModel;
         const model = gltf.scene.children[0]
         model.scale.set(model.scale.x * scaleFactor, model.scale.y * scaleFactor, model.scale.z * scaleFactor)
         model.rotation.z = Math.PI * 0.5
+        model.position.set(0, 0, 0)
+
         
         for(let z=0; z<8; z++)
         {
@@ -217,7 +230,8 @@ gltfLoader.load(
         const model = gltf.scene.children[0]
         model.scale.set(model.scale.x * scaleFactor, model.scale.y * scaleFactor, model.scale.z * scaleFactor)
         model.rotation.z = Math.PI * 0.5
-        
+        model.position.set(0, 0, 0)
+
         createPieceByModel(new THREE.Vector3(7, 0.8, 0), "black", "rook", model.clone())
         createPieceByModel(new THREE.Vector3(7, 0.8, 7), "black", "rook", model.clone())
     }
@@ -230,6 +244,7 @@ gltfLoader.load(
         const model = gltf.scene.children[0]
         model.scale.set(model.scale.x * scaleFactor, model.scale.y * scaleFactor, model.scale.z * scaleFactor)
         model.rotation.z = - Math.PI
+        model.position.set(0, 0, 0)
         
         createPieceByModel(new THREE.Vector3(7, 0.5, 6), "black", "knight", model.clone())
         createPieceByModel(new THREE.Vector3(7, 0.5, 1), "black", "knight", model.clone())
@@ -243,7 +258,8 @@ gltfLoader.load(
         const model = gltf.scene.children[0]
         model.scale.set(model.scale.x * scaleFactor, model.scale.y * scaleFactor, model.scale.z * scaleFactor)
         model.rotation.z = Math.PI * 0.5
-        
+        model.position.set(0, 0, 0)
+
         createPieceByModel(new THREE.Vector3(7, 0.8, 2), "black", "bishop", model.clone())
         createPieceByModel(new THREE.Vector3(7, 0.8, 5), "black", "bishop", model.clone())
     
@@ -257,6 +273,7 @@ gltfLoader.load(
         blackQueenModel = gltf.scene.children[0]
         blackQueenModel.scale.set(blackQueenModel.scale.x * scaleFactor, blackQueenModel.scale.y * scaleFactor, blackQueenModel.scale.z * scaleFactor)
         blackQueenModel.rotation.z = Math.PI * 0.5
+        blackQueenModel.position.set(0, 0, 0)
 
         createPieceByModel(new THREE.Vector3(7, 0.9, 3), "black", "queen", blackQueenModel.clone())    
     }
@@ -269,7 +286,8 @@ gltfLoader.load(
         const model = gltf.scene.children[0]
         model.scale.set(model.scale.x * scaleFactor, model.scale.y * scaleFactor, model.scale.z * scaleFactor)
         model.rotation.z = Math.PI * 0.5
-        
+        model.position.set(0, 0, 0)
+
         createPieceByModel(new THREE.Vector3(7, 1.2, 4), "black", "king", model.clone())
     
     }
@@ -283,7 +301,8 @@ gltfLoader.load(
         const model = gltf.scene.children[0]
         model.scale.set(model.scale.x * scaleFactor, model.scale.y * scaleFactor, model.scale.z * scaleFactor)
         model.rotation.z = Math.PI * -0.5
-        
+        model.position.set(0, 0, 0)
+
         for(let z=0; z<8; z++)
         {
             createPieceByModel(new THREE.Vector3(1, 0.5, z), "white", "pawn", model.clone())
@@ -298,7 +317,8 @@ gltfLoader.load(
         const model = gltf.scene.children[0]
         model.scale.set(model.scale.x * scaleFactor, model.scale.y * scaleFactor, model.scale.z * scaleFactor)
         model.rotation.z = Math.PI * -0.5
-        
+        model.position.set(0, 0, 0)
+
         createPieceByModel(new THREE.Vector3(0, 0.8, 0), "white", "rook", model.clone())
         createPieceByModel(new THREE.Vector3(0, 0.8, 7), "white", "rook", model.clone())
     }
@@ -311,6 +331,7 @@ gltfLoader.load(
         const model = gltf.scene.children[0]
         model.scale.set(model.scale.x * scaleFactor, model.scale.y * scaleFactor, model.scale.z * scaleFactor)
         model.rotation.z = Math.PI * 0.5
+        model.position.set(0, 0, 0)
 
         createPieceByModel(new THREE.Vector3(0, 0.5, 6), "white", "knight", model.clone())
         createPieceByModel(new THREE.Vector3(0, 0.5, 1), "white", "knight", model.clone())
@@ -324,7 +345,8 @@ gltfLoader.load(
         const model = gltf.scene.children[0]
         model.scale.set(model.scale.x * scaleFactor, model.scale.y * scaleFactor, model.scale.z * scaleFactor)
         model.rotation.z = Math.PI * -0.5
-        
+        model.position.set(0, 0, 0)
+
         createPieceByModel(new THREE.Vector3(0, 0.8, 2), "white", "bishop", model.clone())
         createPieceByModel(new THREE.Vector3(0, 0.8, 5), "white", "bishop", model.clone())
     
@@ -338,6 +360,7 @@ gltfLoader.load(
         whiteQueenModel = gltf.scene.children[0]
         whiteQueenModel.scale.set(whiteQueenModel.scale.x * scaleFactor, whiteQueenModel.scale.y * scaleFactor, whiteQueenModel.scale.z * scaleFactor)
         whiteQueenModel.rotation.z = Math.PI * -0.5
+        whiteQueenModel.position.set(0, 0, 0)
 
         createPieceByModel(new THREE.Vector3(0, 0.9, 3), "white", "queen", whiteQueenModel.clone())    
     }
@@ -350,7 +373,8 @@ gltfLoader.load(
         const model = gltf.scene.children[0]
         model.scale.set(model.scale.x * scaleFactor, model.scale.y * scaleFactor, model.scale.z * scaleFactor)
         model.rotation.z = Math.PI * -0.5
-        
+        model.position.set(0, 0, 0)
+
         createPieceByModel(new THREE.Vector3(0, 1.2, 4), "white", "king", model.clone())
     
     }
