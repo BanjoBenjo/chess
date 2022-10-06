@@ -559,6 +559,7 @@ const parameter = {
     cameraRotationZ: 0
 }
 parameter.resetCamera = () => { resetCamera = true}
+parameter.orthoCamera = true
 
 
 gui.add(parameter, 'camerax').min(-10).max(10)
@@ -580,7 +581,6 @@ camera.rotation.set(
     parameter.cameraRotationY, 
     parameter.cameraRotationZ)
 scene.add(camera)
-
 
 /**
  * Renderer
@@ -1301,10 +1301,9 @@ const tick = () =>
         resetCamera = false
     }
 
-    
     // Render
     renderer.render(scene, camera)
-
+    
     // Call tick again on the next frame
     window.requestAnimationFrame(tick)
 }
