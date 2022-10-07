@@ -1003,9 +1003,12 @@ const resetEnPassent = () => {
     enPassent.possibleSquares = []
 }
 
-const getPossibleRochade = (piece, originPosition) => {
+const getPossibleRochade = (piece, originPosition, goalPosition) => {
     if(piece.name != "king") { return [] }
     if(rochade[piece.color].kingMoved) { return [] }
+
+    if(piece.color === "white" && goalPosition.x != 0 ) { return []}
+    if(piece.color === "black" && goalPosition.x != 7 ) { return []}
     
     let validKingMoves = []
 
@@ -1211,7 +1214,7 @@ const checkLegalMove = (originPosition, piece) => {
         z: goalPosition.z - originPosition.z
     }
     const validMoves = getValidMoves(piece, originPosition)
-    validMoves.push(... getPossibleRochade(piece, originPosition))
+    validMoves.push(... getPossibleRochade(piece, originPosition, goalPosition))
     if( !containsObject(move, validMoves) ) { return false }
     if( !checkKingChecks(piece, goalPosition)) { return false }
 
