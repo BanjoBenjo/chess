@@ -85,11 +85,11 @@ const squareGeometry = new THREE.BoxGeometry(1, 0.2, 1)
 
 const createSquare = (black, position) => {
     const squareMaterial = new THREE.MeshStandardMaterial({
-        metalness: 0.3,
-        roughness: 0.4,
+        metalness: 0.2,
+        roughness: 0.3,
     })
     const square = new THREE.Mesh(squareGeometry, squareMaterial)
-    square.material.color = new THREE.Color((black ===1) ? 'white' : 'black')
+    square.material.color = new THREE.Color((black ===1) ? '#C1C1C1' : '#404040')
 
     square.position.copy(position)
     return square
@@ -509,7 +509,7 @@ function containsObject(obj, list) {
 /**
  * Lights
  */
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.7)
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.8)
 scene.add(ambientLight)
 
 const directionalLight = new THREE.DirectionalLight(0xffffff, 0.2)
