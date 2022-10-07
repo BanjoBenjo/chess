@@ -11,6 +11,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
  * Debug
  */
 const gui = new dat.GUI()
+const mid = new THREE.Vector3(3.5, 0, 3.5)
 
 /**
  * Globals
@@ -69,21 +70,6 @@ const canvas = document.querySelector('canvas.webgl')
 
 // Scene
 const scene = new THREE.Scene()
-
-/**
- * Textures
- */
-const textureLoader = new THREE.TextureLoader()
-const cubeTextureLoader = new THREE.CubeTextureLoader()
-
-const environmentMapTexture = cubeTextureLoader.load([
-    '/textures/environmentMaps/0/px.png',
-    '/textures/environmentMaps/0/nx.png',
-    '/textures/environmentMaps/0/py.png',
-    '/textures/environmentMaps/0/ny.png',
-    '/textures/environmentMaps/0/pz.png',
-    '/textures/environmentMaps/0/nz.png'
-])
 
 /**
  * Objects
@@ -149,10 +135,6 @@ const getEmptyAttackMap = () =>
 // Pieces
 
 const boxMaterial = new THREE.MeshStandardMaterial({
-            metalness: 0.3,
-            roughness: 0.4,
-            envMap: environmentMapTexture,
-            envMapIntensity: 0.5,
             transparent: true,
             opacity: 0,
             // wireframe: true
@@ -163,29 +145,25 @@ let size = new THREE.Vector3(); // create once and reuse
 
 const createPieceByModel = (position, color, name, model) => 
 {
-    console.log(model)
     const material = boxMaterial.clone()
     material.color.set(new THREE.Color((color === "black"? 'grey' : 'white')))
-
-    
-    // model.position.copy(position)
     
     let boxHelper = new THREE.BoxHelper(model, 0xffffff);
     box3.setFromObject( boxHelper );
     box3.getSize( size ); // pass in size so a new Vector3 is not allocated
-    console.log( size )
     
     const boxGeometry = new THREE.BoxGeometry(1, size.y + 0.8, 1)
     const piece_box = new THREE.Mesh(boxGeometry, material)
     
+    model.castShadow = true    
 
     piece_box.name = name
     piece_box.color = color
-    piece_box.castShadow = true    
+    piece_box.castShadow= false
     piece_box.position.copy(position)
-    scene.add(piece_box)
+
     piece_box.add(model)
-    //piece_box.position.copy(position)
+    scene.add(piece_box)
 
     board[position.x][position.z].piece = piece_box
     pieces[color].push(piece_box)
@@ -492,19 +470,17 @@ defineKingMoves()
  * Floor
  */
 const floor = new THREE.Mesh(
-    new THREE.PlaneGeometry(20, 20),
+    new THREE.PlaneGeometry(30, 30),
     new THREE.MeshStandardMaterial({
         color: '#777777',
         metalness: 0.3,
         roughness: 0.4,
-        envMap: environmentMapTexture,
-        envMapIntensity: 0.5
     })
 )
 floor.receiveShadow = true
 floor.rotation.x = - Math.PI * 0.5
-floor.position.x = floor.position.x + 4.5
-floor.position.z = floor.position.z + 4.5 
+floor.position.x = floor.position.x + 4
+floor.position.z = floor.position.z + 4
 scene.add(floor)
 
 /**
@@ -539,7 +515,7 @@ scene.add(ambientLight)
 const directionalLight = new THREE.DirectionalLight(0xffffff, 0.2)
 directionalLight.castShadow = true
 directionalLight.shadow.mapSize.set(1024, 1024)
-directionalLight.shadow.camera.far = 15
+directionalLight.shadow.camera.orthoCameraFar = 15
 directionalLight.shadow.camera.left = - 7
 directionalLight.shadow.camera.top = 7
 directionalLight.shadow.camera.right = 7
@@ -574,27 +550,33 @@ window.addEventListener('resize', () =>
  * Camera
  */
 
-const parameter = {
+let parameter = {
     camerax: 3.55,
     cameray: 6,
     cameraz: 3.5,
     cameraRotationX: 0,
     cameraRotationY: Math.PI * 1.5,
-    cameraRotationZ: 0
+    cameraRotationZ: 0,
+
+    orthoCamerax: 3.55,
+    orthoCameray: 6,
+    orthoCameraz: 3.5,
+    orthoCameraRotationX: Math.PI * -0.50,
+    orthoCameraRotationY: 0,
+    orthoCameraRotationZ: Math.PI * -0.5,
+    orthoCameraFrustumSize: 12,
+    orthoCameraNear: 1,
+    orthoCameraFar: 7
 }
-parameter.resetCamera = () => { resetCamera = true}
-parameter.orthoCamera = true
+parameter.resetCamera = () => { resetCamera = true};
+parameter.orthoCamera = false;
+parameter.toggleShadows = () => { toggleShadows() }
 
-
-gui.add(parameter, 'camerax').min(-10).max(10)
-gui.add(parameter, 'cameray').min(-10).max(10)
-gui.add(parameter, 'cameraz').min(-10).max(10)
-gui.add(parameter, 'cameraRotationX').min(0).max(2*Math.PI)
-gui.add(parameter, 'cameraRotationY').min(0).max(2*Math.PI)
-gui.add(parameter, 'cameraRotationZ').min(0).max(2*Math.PI)
+gui.add(parameter, 'orthoCamera')
 gui.add(parameter, 'resetCamera')
+gui.add(parameter, 'toggleShadows')
 
-// Base camera
+// Perspective camera
 const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
 camera.position.set(
     parameter.camerax, 
@@ -605,6 +587,45 @@ camera.rotation.set(
     parameter.cameraRotationY, 
     parameter.cameraRotationZ)
 scene.add(camera)
+
+
+let aspect = sizes.width / sizes.height
+console.log(aspect)
+
+//Ortho Camera
+const cameraOrtho = new THREE.OrthographicCamera( 
+    parameter.orthoCameraFrustumSize * aspect / - 2, 
+    parameter.orthoCameraFrustumSize * aspect / 2, 
+    parameter.orthoCameraFrustumSize / 2, 
+    parameter.orthoCameraFrustumSize / - 2, 
+    parameter.orthoCameraNear, 
+    parameter.orthoCameraFar );
+
+cameraOrtho.position.set(
+    parameter.orthoCamerax, 
+    parameter.orthoCameray, 
+    parameter.orthoCameraz)
+cameraOrtho.rotation.set(
+    parameter.orthoCameraRotationX, 
+    parameter.orthoCameraRotationY, 
+    parameter.orthoCameraRotationZ)
+
+cameraOrtho.lookAt(mid)
+scene.add(cameraOrtho)
+
+
+const cameraOrthoHelper = new THREE.CameraHelper( cameraOrtho );
+scene.add( cameraOrthoHelper );
+
+// gui.add(parameter, 'orthoCamerax').min(-10).max(10).step(0.5)
+// gui.add(parameter, 'orthoCameray').min(-10).max(10).step(0.5)
+// gui.add(parameter, 'orthoCameraz').min(-10).max(10).step(0.5)
+// gui.add(parameter, 'orthoCameraRotationX').min(-4).max(4).step(0.01)
+// gui.add(parameter, 'orthoCameraRotationY').min(-4).max(4).step(0.01)
+// gui.add(parameter, 'orthoCameraRotationZ').min(-4).max(4).step(0.01)
+// gui.add(parameter, 'orthoCameraNear').min(0).max(10).step(1)
+// gui.add(parameter, 'orthoCameraFar').min(1).max(10).step(1)
+
 
 /**
  * Renderer
@@ -620,8 +641,8 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 /**
  * Controls
  */
-const blackDragControls = new DragControls( pieces.black, camera, renderer.domElement );
-const whiteDragControls = new DragControls( pieces.white, camera, renderer.domElement );
+const blackDragControls = new DragControls( pieces.black, cameraOrtho, renderer.domElement );
+const whiteDragControls = new DragControls( pieces.white, cameraOrtho, renderer.domElement );
 
 const orbitControls = new OrbitControls(camera, canvas)
 orbitControls.enableDamping = true
@@ -1293,20 +1314,34 @@ const turnOffAllSquares = () => {
 /**
  * Animate
  */
-const clock = new THREE.Clock()
 
-const mid = new THREE.Vector3(3.5, 0, 3.5)
-let oldElapsedTime = 0
+const toggleShadows = () => {
+    renderer.shadowMap.enabled = !renderer.shadowMap.enabled
+    scene.traverse(function (child) {
+    if (child.material) {
+        child.material.needsUpdate = true
+    }
+})
 
+}
 const tick = () =>
 {
-    const elapsedTime = clock.getElapsedTime()
-    const deltaTime = elapsedTime - oldElapsedTime
-    oldElapsedTime = elapsedTime
+    let activeCamera
+
+    if (parameter.orthoCamera)
+    {
+        activeCamera = cameraOrtho
+        orbitControls.enabled = false
+    }
+    else
+    {
+        activeCamera = camera
+        orbitControls.enabled = true
+    }
 
     // Update controls
     orbitControls.update() 
-
+    
     // Update Camera Position
     if(resetCamera === true)
     {
@@ -1325,8 +1360,24 @@ const tick = () =>
         resetCamera = false
     }
 
+    cameraOrtho.position.set(
+        parameter.orthoCamerax, 
+        parameter.orthoCameray, 
+        parameter.orthoCameraz)
+        
+    cameraOrtho.rotation.set(
+        parameter.orthoCameraRotationX, 
+        parameter.orthoCameraRotationY, 
+        parameter.orthoCameraRotationZ)
+
+    cameraOrtho.near = parameter.orthoCameraNear
+    cameraOrtho.far = parameter.orthoCameraFar
+
+    cameraOrtho.updateProjectionMatrix();
+    cameraOrthoHelper.update();
+
     // Render
-    renderer.render(scene, camera)
+    renderer.render(scene, activeCamera)
     
     // Call tick again on the next frame
     window.requestAnimationFrame(tick)
