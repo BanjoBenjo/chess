@@ -1099,10 +1099,20 @@ const checkLegalMove = (originPosition, piece) => {
 // return a position at the side of the field for the taken pieces
 const getOutPiecePlace = (piece) => {
     const color = piece.color
+    const row = Math.floor((out[color].length - 1) / 8)
+
     if (color === 'white') {
-        return { x: 9, y: piece.position.y, z: 9 - out[color].length }
+        return {
+            x: 9 + row,
+            y: piece.position.y,
+            z: 7 - ((out[color].length - 1) % 8),
+        }
     } else {
-        return { x: -2, y: piece.position.y, z: -1 + out[color].length }
+        return {
+            x: -2 - row,
+            y: piece.position.y,
+            z: (out[color].length - 1) % 8,
+        }
     }
 }
 
@@ -1353,8 +1363,8 @@ const dragend = (event) => {
                     })
                 }
                 if (piece.position.x === 7) {
-                    piece.position.x = -3
-                    piece.position.z = -2
+                    piece.position.x = -1
+                    piece.position.z = -1
                     createPieceByModel(
                         new THREE.Vector3(
                             oldSquare.position.x,
