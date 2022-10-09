@@ -1449,6 +1449,14 @@ whiteDragControls.addEventListener('dragend', dragend)
 
 blackDragControls.enabled = false
 
+const enableDragControls = () => {
+    if (whiteToMove) {
+        whiteDragControls.enabled = true
+    } else {
+        blackDragControls.enabled = true
+    }
+}
+
 /**
  * Eventlistener
  */
@@ -1495,7 +1503,10 @@ const tick = () => {
     if (!parameter['3D-View']) {
         activeCamera = orthoCamera
         orbitControls.enabled = false
+        enableDragControls()
     } else {
+        blackDragControls.enabled = false
+        whiteDragControls.enabled = false
         activeCamera = camera
         orbitControls.enabled = true
     }
