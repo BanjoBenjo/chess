@@ -1464,11 +1464,11 @@ const enableDragControls = () => {
 window.addEventListener('resize', () => {
     console.log('resize')
     // Update sizes
-    calculateFrustumSize()
     sizes.width = window.innerWidth
     sizes.height = window.innerHeight
     sizes.aspect = sizes.width / sizes.height
 
+    calculateFrustumSize()
     // Update perspective camera
     camera.aspect = sizes.aspect
     camera.updateProjectionMatrix()
