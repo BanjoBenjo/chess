@@ -243,7 +243,7 @@ gltfLoader.load('/gltf/black_knight.gltf', (gltf) => {
         model.scale.y * scaleFactor,
         model.scale.z * scaleFactor
     )
-    model.rotation.z = -Math.PI
+    model.rotation.z = -2 * Math.PI
     model.position.set(0, 0, 0)
 
     createPieceByModel(
@@ -372,7 +372,7 @@ gltfLoader.load('/gltf/white_knight.gltf', (gltf) => {
         model.scale.y * scaleFactor,
         model.scale.z * scaleFactor
     )
-    model.rotation.z = Math.PI * 0.5
+    model.rotation.z = -2 * Math.PI
     model.position.set(0, 0, 0)
 
     createPieceByModel(
