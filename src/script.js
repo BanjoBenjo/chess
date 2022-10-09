@@ -1177,12 +1177,12 @@ parameter.toggleShadows = () => {
     toggleShadows()
 }
 // Start with orthoCamera for now
-parameter.orthoCamera = true
+parameter['3D-View'] = false
 
 // Debug stuff
-gui.add(parameter, 'orthoCamera')
-gui.add(parameter, 'resetCamera')
-gui.add(parameter, 'toggleShadows')
+gui.add(parameter, '3D-View')
+// gui.add(parameter, 'resetCamera')
+// gui.add(parameter, 'toggleShadows')
 
 // Perspective camera
 const camera = new THREE.PerspectiveCamera(75, sizes.aspect, 0.1, 100)
@@ -1226,8 +1226,8 @@ orthoCamera.lookAt(mid)
 scene.add(orthoCamera)
 
 // Camera Helper
-const orthoCameraHelper = new THREE.CameraHelper(orthoCamera)
-scene.add(orthoCameraHelper)
+// const orthoCameraHelper = new THREE.CameraHelper(orthoCamera)
+// scene.add(orthoCameraHelper)
 
 // Debug stuff
 // gui.add(parameter, 'orthoCamerax').min(-10).max(10).step(0.5)
@@ -1492,7 +1492,7 @@ const toggleShadows = () => {
 const tick = () => {
     let activeCamera
     // switch active Camera
-    if (parameter.orthoCamera) {
+    if (!parameter['3D-View']) {
         activeCamera = orthoCamera
         orbitControls.enabled = false
     } else {
