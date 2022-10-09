@@ -1497,12 +1497,12 @@ window.addEventListener('resize', () => {
     updateRenderer()
 })
 
-screen.orientation.addEventListener('change', () => {
-    updateSizes()
-    calculateFrustumSize()
-    updateCameras()
-    updateRenderer()
-})
+// screen.orientation.addEventListener('change', () => {
+//     updateSizes()
+//     calculateFrustumSize()
+//     updateCameras()
+//     updateRenderer()
+// })
 
 const toggleShadows = () => {
     renderer.shadowMap.enabled = !renderer.shadowMap.enabled
