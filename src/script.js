@@ -1497,13 +1497,12 @@ window.addEventListener('resize', () => {
     updateRenderer()
 })
 
-screen.orientation.onchange = () => {
-    console.log('orientation changed')
+screen.orientation.addEventListener('change', () => {
     updateSizes()
     calculateFrustumSize()
     updateCameras()
     updateRenderer()
-}
+})
 
 const toggleShadows = () => {
     renderer.shadowMap.enabled = !renderer.shadowMap.enabled
