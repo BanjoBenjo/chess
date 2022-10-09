@@ -1100,9 +1100,9 @@ const checkLegalMove = (originPosition, piece) => {
 const getOutPiecePlace = (piece) => {
     const color = piece.color
     if (color === 'white') {
-        return { x: 8, y: piece.position.y, z: 9 + out[color].length }
+        return { x: 9, y: piece.position.y, z: 9 - out[color].length }
     } else {
-        return { x: -3, y: piece.position.y, z: -3 - out[color].length }
+        return { x: -2, y: piece.position.y, z: -1 + out[color].length }
     }
 }
 
