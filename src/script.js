@@ -1200,8 +1200,6 @@ const calculateFrustumSize = () => {
     // }
     const frustumMin = Math.max(frustumMinLeft, frustumMinTop)
 
-    console.log(frustumMin)
-
     parameter.orthoCameraFrustumSize = Math.max(frustumMinLeft, frustumMinTop)
 }
 
@@ -1462,7 +1460,6 @@ const enableDragControls = () => {
  */
 
 window.addEventListener('resize', () => {
-    console.log('resize')
     // Update sizes
     sizes.width = window.innerWidth
     sizes.height = window.innerHeight
@@ -1478,8 +1475,6 @@ window.addEventListener('resize', () => {
     orthoCamera.right = (parameter.orthoCameraFrustumSize * sizes.aspect) / 2
     orthoCamera.top = parameter.orthoCameraFrustumSize / 2
     orthoCamera.bottom = parameter.orthoCameraFrustumSize / -2
-
-    // console.log(orthoCamera.right)
 
     orthoCamera.updateProjectionMatrix()
 
