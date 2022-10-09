@@ -806,7 +806,6 @@ const getValidPawnMoves = (piece, originPosition) => {
             }
         }
     }
-
     return validPawnMoves
 }
 
@@ -1204,13 +1203,9 @@ const calculateFrustumSize = () => {
     const frustumMinLeft = (4.2 * 2) / sizes.aspect
     const frustumMinTop = 8.4
 
-    // if (frustumLeft > 4 && frustumTop > 4) {
-    //     parameter.orthoCameraFrustumSize = parameter.initialFrustumSize
-    //     return
-    // }
     const frustumMin = Math.max(frustumMinLeft, frustumMinTop)
 
-    parameter.orthoCameraFrustumSize = Math.max(frustumMinLeft, frustumMinTop)
+    parameter.orthoCameraFrustumSize = frustumMin
 }
 
 calculateFrustumSize()
@@ -1468,14 +1463,14 @@ const enableDragControls = () => {
 /**
  * Eventlistener
  */
-
-window.addEventListener('resize', () => {
+const updateSizes = () => {
     // Update sizes
     sizes.width = window.innerWidth
     sizes.height = window.innerHeight
     sizes.aspect = sizes.width / sizes.height
+}
 
-    calculateFrustumSize()
+const updateCameras = () => {
     // Update perspective camera
     camera.aspect = sizes.aspect
     camera.updateProjectionMatrix()
@@ -1487,11 +1482,28 @@ window.addEventListener('resize', () => {
     orthoCamera.bottom = parameter.orthoCameraFrustumSize / -2
 
     orthoCamera.updateProjectionMatrix()
+}
 
+const updateRenderer = () => {
     // Update renderer
     renderer.setSize(sizes.width, sizes.height)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+}
+
+window.addEventListener('resize', () => {
+    updateSizes()
+    calculateFrustumSize()
+    updateCameras()
+    updateRenderer()
 })
+
+screen.orientation.onchange = () => {
+    console.log('orientation changed')
+    updateSizes()
+    calculateFrustumSize()
+    updateCameras()
+    updateRenderer()
+}
 
 const toggleShadows = () => {
     renderer.shadowMap.enabled = !renderer.shadowMap.enabled
