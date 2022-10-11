@@ -2,10 +2,11 @@ import './style.css'
 import * as THREE from 'three'
 import { DragControls } from 'three/examples/jsm/controls/DragControls.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import * as dat from 'lil-gui'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import * as dat from 'lil-gui'
 
-import { containsObject } from './utils'
+import { containsObject } from './chess/utils'
+import { getMoves } from './chess/moves'
 
 /**
  * Debug
@@ -33,6 +34,8 @@ const out = {
     white: [],
     black: [],
 }
+
+const moves = getMoves()
 
 // Move relevant Variables
 let whiteToMove = true
@@ -176,9 +179,10 @@ const createPieceByModel = (position, color, name, model) => {
     piece_box.position.copy(position)
 
     piece_box.add(model)
-    scene.add(piece_box)
 
     // add piece to board and color pieces (to enable/disabkle black or white to move)
+    scene.add(piece_box)
+
     board[position.x][position.z].piece = piece_box
     pieces[color].push(piece_box)
 }
@@ -449,105 +453,6 @@ gltfLoader.load('/gltf/white_king.gltf', (gltf) => {
     )
 })
 
-/**
- * Moves
- */
-// Pawns
-const moves = {
-    'white-pawn': [{ x: 1, z: 0 }],
-    'white-pawn-first': [{ x: 2, z: 0 }],
-    'white-pawn-capture-left': [{ x: 1, z: -1 }],
-    'white-pawn-capture-right': [{ x: 1, z: 1 }],
-    'black-pawn': [{ x: -1, z: 0 }],
-    'black-pawn-first': [{ x: -2, z: 0 }],
-    'black-pawn-capture-left': [{ x: -1, z: 1 }],
-    'black-pawn-capture-right': [{ x: -1, z: -1 }],
-}
-
-// Rooks
-const defineRookMoves = () => {
-    let rookMoves = []
-    for (let t = -7; t < 8; t++) {
-        if (t === 0) {
-            continue
-        }
-        rookMoves.push({ x: t, z: 0 })
-        rookMoves.push({ x: 0, z: t })
-    }
-    moves.rook = rookMoves
-}
-defineRookMoves()
-
-// Bishops
-const defineBishopMoves = () => {
-    let bishopMoves = []
-    for (let t = -7; t < 8; t++) {
-        if (t === 0) {
-            continue
-        }
-        bishopMoves.push({ x: t, z: t })
-        bishopMoves.push({ x: -t, z: t })
-        bishopMoves.push({ x: t, z: -t })
-        bishopMoves.push({ x: -t, z: -t })
-    }
-    moves.bishop = bishopMoves
-}
-defineBishopMoves()
-
-// Knights
-const defineKnightMoves = () => {
-    moves.knight = [
-        { x: -2, z: -1 },
-        { x: -2, z: 1 },
-        { x: -1, z: -2 },
-        { x: -1, z: 2 },
-        { x: 1, z: -2 },
-        { x: 1, z: 2 },
-        { x: 2, z: -1 },
-        { x: 2, z: 1 },
-    ]
-}
-defineKnightMoves()
-
-// Queen
-const defineQueenMoves = () => {
-    let queenMoves = []
-    for (let t = -7; t < 8; t++) {
-        if (t === 0) {
-            continue
-        }
-        queenMoves.push({ x: t, z: t })
-        queenMoves.push({ x: -t, z: t })
-        queenMoves.push({ x: t, z: -t })
-        queenMoves.push({ x: -t, z: -t })
-        queenMoves.push({ x: t, z: 0 })
-        queenMoves.push({ x: 0, z: t })
-    }
-    moves.queen = queenMoves
-}
-defineQueenMoves()
-
-// King
-const defineKingMoves = () => {
-    let kingMoves = []
-    for (let t = -1; t < 2; t++) {
-        if (t === 0) {
-            continue
-        }
-        kingMoves.push({ x: t, z: t })
-        kingMoves.push({ x: -t, z: t })
-        kingMoves.push({ x: t, z: -t })
-        kingMoves.push({ x: -t, z: -t })
-        kingMoves.push({ x: t, z: 0 })
-        kingMoves.push({ x: 0, z: t })
-    }
-    moves.king = kingMoves
-
-    moves['king-short-rochade'] = [{ x: 0, z: 2 }]
-    moves['king-long-rochade'] = [{ x: 0, z: -3 }]
-}
-defineKingMoves()
-
 // Initialize empty atackMap
 const getEmptyAttackMap = () => {
     let attackMap = {
@@ -693,14 +598,14 @@ const getValidPawnMoves = (piece, originPosition) => {
         // if pawn is not on queening square
         if (originPosition.x != 7) {
             if (board[originPosition.x + 1][originPosition.z].piece === null) {
-                validPawnMoves.push(...moves['white-pawn'])
+                validPawnMoves.push(...moves.pawn['white-pawn'])
 
                 // on first move
                 if (
                     originPosition.x === 1 &&
                     board[3][originPosition.z].piece === null
                 ) {
-                    validPawnMoves.push(...moves['white-pawn-first'])
+                    validPawnMoves.push(...moves.pawn['white-pawn-first'])
                 }
             }
 
@@ -721,12 +626,16 @@ const getValidPawnMoves = (piece, originPosition) => {
             // when pawn is able to capture something
             if (rightPiece != null) {
                 if (rightPiece.color === 'black') {
-                    validPawnMoves.push(...moves['white-pawn-capture-right'])
+                    validPawnMoves.push(
+                        ...moves.pawn['white-pawn-capture-right']
+                    )
                 }
             }
             if (leftPiece != null) {
                 if (leftPiece.color === 'black') {
-                    validPawnMoves.push(...moves['white-pawn-capture-left'])
+                    validPawnMoves.push(
+                        ...moves.pawn['white-pawn-capture-left']
+                    )
                 }
             }
 
@@ -739,10 +648,12 @@ const getValidPawnMoves = (piece, originPosition) => {
                 ) {
                     if (originPosition.z < enPassent.movedPawn.position.z) {
                         validPawnMoves.push(
-                            ...moves['white-pawn-capture-right']
+                            ...moves.pawn['white-pawn-capture-right']
                         )
                     } else {
-                        validPawnMoves.push(...moves['white-pawn-capture-left'])
+                        validPawnMoves.push(
+                            ...moves.pawn['white-pawn-capture-left']
+                        )
                     }
                 }
             }
@@ -752,14 +663,14 @@ const getValidPawnMoves = (piece, originPosition) => {
         // if pawn is not on queening square
         if (originPosition.x != 0) {
             if (board[originPosition.x - 1][originPosition.z].piece === null) {
-                validPawnMoves.push(...moves['black-pawn'])
+                validPawnMoves.push(...moves.pawn['black-pawn'])
 
                 // on first move
                 if (
                     originPosition.x === 6 &&
                     board[4][originPosition.z].piece === null
                 ) {
-                    validPawnMoves.push(...moves['black-pawn-first'])
+                    validPawnMoves.push(...moves.pawn['black-pawn-first'])
                 }
             }
 
@@ -779,12 +690,16 @@ const getValidPawnMoves = (piece, originPosition) => {
 
             if (rightPiece != null) {
                 if (rightPiece.color === 'white') {
-                    validPawnMoves.push(...moves['black-pawn-capture-right'])
+                    validPawnMoves.push(
+                        ...moves.pawn['black-pawn-capture-right']
+                    )
                 }
             }
             if (leftPiece != null) {
                 if (leftPiece.color === 'white') {
-                    validPawnMoves.push(...moves['black-pawn-capture-left'])
+                    validPawnMoves.push(
+                        ...moves.pawn['black-pawn-capture-left']
+                    )
                 }
             }
 
@@ -796,10 +711,12 @@ const getValidPawnMoves = (piece, originPosition) => {
                         originPosition.z === enPassent.possibleSquares[1].z)
                 ) {
                     if (originPosition.z < enPassent.movedPawn.position.z) {
-                        validPawnMoves.push(...moves['black-pawn-capture-left'])
+                        validPawnMoves.push(
+                            ...moves.pawn['black-pawn-capture-left']
+                        )
                     } else {
                         validPawnMoves.push(
-                            ...moves['black-pawn-capture-right']
+                            ...moves.pawn['black-pawn-capture-right']
                         )
                     }
                 }
@@ -845,7 +762,7 @@ const getPossibleRochade = (piece, originPosition, goalPosition) => {
                 }
             }
             if (!check) {
-                validKingMoves.push(...moves['king-long-rochade'])
+                validKingMoves.push(...moves.king['king-long-rochade'])
             }
         }
     }
@@ -865,7 +782,7 @@ const getPossibleRochade = (piece, originPosition, goalPosition) => {
                 }
             }
             if (!check) {
-                validKingMoves.push(...moves['king-short-rochade'])
+                validKingMoves.push(...moves.king['king-short-rochade'])
             }
         }
     }
@@ -1404,7 +1321,7 @@ const dragend = (event) => {
         // keep position of kings up to date to make checking for "checks" more efficient
         if (piece.name === 'king') {
             // Long Rochade moved
-            if (kingsPosition[piece.color].z - piece.position.z === 3) {
+            if (kingsPosition[piece.color].z - piece.position.z === 2) {
                 // move rook in board array
                 const rook = board[piece.position.x][0].piece
                 board[piece.position.x][0].piece = null
@@ -1491,18 +1408,13 @@ const updateRenderer = () => {
 }
 
 window.addEventListener('resize', () => {
+    console.log(`Resize`)
+
     updateSizes()
     calculateFrustumSize()
     updateCameras()
     updateRenderer()
 })
-
-// screen.orientation.addEventListener('change', () => {
-//     updateSizes()
-//     calculateFrustumSize()
-//     updateCameras()
-//     updateRenderer()
-// })
 
 const toggleShadows = () => {
     renderer.shadowMap.enabled = !renderer.shadowMap.enabled
